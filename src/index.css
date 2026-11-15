@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #F7F8FA;
+    color: #141b2c;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f3ff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c1c6d5;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #727784;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-primary-container text-on-primary font-semibold text-label-md transition-all hover:bg-primary-hover active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2 shadow-card;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-surface-white text-on-surface font-semibold text-label-md border border-border-subtle transition-all hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2 shadow-card;
+  }
+  .input-field {
+    @apply w-full h-11 px-3.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card;
+  }
+  .card {
+    @apply bg-surface-white border border-border-subtle rounded-xl shadow-card;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-md text-label-md font-medium transition-all;
+  }
+  .nav-item-active {
+    @apply bg-white/15 text-on-primary border border-white/20;
+  }
+  .nav-item-inactive {
+    @apply text-white/75 hover:bg-white/10 hover:text-white;
+  }
+  .status-badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-medium;
+  }
+  .chip {
+    @apply inline-flex items-center px-3 py-1.5 rounded-full text-label-sm border transition-all cursor-pointer;
+  }
+  .chip-selected {
+    @apply bg-primary-container text-on-primary border-primary-container;
+  }
+  .chip-unselected {
+    @apply bg-surface-white text-text-secondary border-border-subtle hover:border-primary-container hover:text-primary-container;
+  }
+}
