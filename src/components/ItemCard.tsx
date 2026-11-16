@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ItemSummary } from '../types';
+import { formatImageUrl } from '../utils/imageUrl';
 
 interface ItemCardProps {
   item: ItemSummary;
 }
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
+  const [imageError, setImageError] = useState(false);
   const isFound = item.item_type === 'found';
   const location = isFound ? (item as any).location_found : (item as any).last_seen_location;
+  const photoUrl = 'photo_url' in item && item.photo_url ? formatImageUrl(item.photo_url) : '';
 
   // Format tanggal Indonesia
   const formatDate = (dateString: string) => {
@@ -28,14 +31,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
     <div className="bg-surface-white rounded-xl border border-border-subtle shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all flex flex-col overflow-hidden group">
       {/* Header Image / Placeholder */}
       <div className="relative aspect-[16/9] w-full bg-surface-container overflow-hidden flex items-center justify-center">
-        {'photo_url' in item && item.photo_url ? (
+        {photoUrl && !imageError ? (
           <img
-            src={item.photo_url}
+            src={photoUrl}
             alt={item.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center text-text-secondary gap-1">

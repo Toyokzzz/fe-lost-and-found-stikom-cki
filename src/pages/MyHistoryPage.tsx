@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Claim, FoundItem, LostReport } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { formatImageUrl } from '../utils/imageUrl';
 
 export const MyHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -188,9 +189,12 @@ export const MyHistoryPage: React.FC = () => {
                     <div className="w-20 h-20 rounded-xl bg-surface-container-low border border-border-subtle overflow-hidden flex-shrink-0 flex items-center justify-center">
                       {claim.found_item?.photo_url ? (
                         <img
-                          src={claim.found_item.photo_url}
+                          src={formatImageUrl(claim.found_item.photo_url)}
                           alt={claim.found_item.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
                         />
                       ) : (
                         <span className="material-symbols-outlined text-[32px] text-outline-variant">sell</span>
@@ -282,43 +286,100 @@ export const MyHistoryPage: React.FC = () => {
         <div className="space-y-4">
           {foundItems.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {foundItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-surface-white rounded-2xl border border-border-subtle p-5 shadow-card space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-label-sm font-semibold text-status-success bg-green-50 px-2.5 py-0.5 rounded-full">
-                      {item.category?.name}
-                    </span>
-                    <span
-                      className={`text-label-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                        item.status === 'active'
-                          ? 'bg-primary-subtle text-primary-container'
-                          : item.status === 'claimed'
-                          ? 'bg-purple-50 text-purple-700'
-                          : 'bg-surface-container text-text-secondary'
-                      }`}
-                    >
-                      {item.status.toUpperCase()}
-                    </span>
-                  </div>
+              {foundItems.map((item) => {
+                const itemClaim = item.claims && item.claims.length > 0 ? item.claims[0] : null;
+                const photoSrc = item.photo_url ? formatImageUrl(item.photo_url) : '';
 
-                  <h3 className="font-bold text-text-primary text-headline-sm">{item.title}</h3>
-                  <p className="text-body-sm text-text-secondary line-clamp-2">{item.description}</p>
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-surface-white rounded-2xl border border-border-subtle p-5 shadow-card space-y-4 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-label-sm font-semibold text-status-success bg-green-50 px-2.5 py-0.5 rounded-full">
+                          {item.category?.name}
+                        </span>
+                        <span
+                          className={`text-label-sm font-semibold px-2.5 py-0.5 rounded-full ${
+                            item.status === 'active'
+                              ? 'bg-primary-subtle text-primary-container'
+                              : item.status === 'claimed'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-surface-container text-text-secondary'
+                          }`}
+                        >
+                          {item.status.toUpperCase()}
+                        </span>
+                      </div>
 
-                  <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-body-sm text-text-secondary">
-                    <span>Loket FO: {item.storage_location?.name}</span>
-                    <Link
-                      to={`/item/found/${item.id}`}
-                      className="font-semibold text-primary-container hover:text-primary-hover inline-flex items-center gap-1"
-                    >
-                      Detail
-                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                    </Link>
+                      <div className="flex items-start gap-3">
+                        <div className="w-16 h-16 rounded-xl bg-surface-container-low border border-border-subtle overflow-hidden flex-shrink-0 flex items-center justify-center">
+                          {photoSrc ? (
+                            <img
+                              src={photoSrc}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-[28px] text-outline-variant">image</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-text-primary text-headline-sm truncate">{item.title}</h3>
+                          <p className="text-body-sm text-text-secondary line-clamp-2">{item.description}</p>
+                        </div>
+                      </div>
+
+                      {/* Display Claim Code to Reporter if Item is Claimed */}
+                      {itemClaim && (
+                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">key</span>
+                              KODE KLAIM PEMILIK:
+                            </span>
+                            <span className="text-[11px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                              {itemClaim.status === 'handed_over' ? 'Selesai' : 'Siap Dicocokkan di FO'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between bg-surface-white px-3 py-1.5 rounded-lg border border-purple-200">
+                            <span className="font-mono font-black text-lg tracking-widest text-purple-950">
+                              {itemClaim.claim_code}
+                            </span>
+                            <button
+                              onClick={() => handleCopyCode(itemClaim.claim_code)}
+                              className="p-1 rounded text-purple-700 hover:text-purple-900 transition-colors"
+                              title="Salin Kode"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">
+                                {copiedCode === itemClaim.claim_code ? 'check' : 'content_copy'}
+                              </span>
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-purple-800">
+                            Cocokkan kode ini dengan loket Front Office &amp; penerima barang.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-body-sm text-text-secondary">
+                      <span>Loket FO: {item.storage_location?.name}</span>
+                      <Link
+                        to={`/item/found/${item.id}`}
+                        className="font-semibold text-primary-container hover:text-primary-hover inline-flex items-center gap-1"
+                      >
+                        Detail
+                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-16 bg-surface-white rounded-2xl border border-border-subtle text-text-secondary space-y-3 shadow-card">
@@ -341,43 +402,67 @@ export const MyHistoryPage: React.FC = () => {
         <div className="space-y-4">
           {lostReports.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {lostReports.map((report) => (
-                <div
-                  key={report.id}
-                  className="bg-surface-white rounded-2xl border border-border-subtle p-5 shadow-card space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-label-sm font-semibold text-status-warning bg-amber-50 px-2.5 py-0.5 rounded-full">
-                      {report.category?.name}
-                    </span>
-                    <span
-                      className={`text-label-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                        report.status === 'active'
-                          ? 'bg-primary-subtle text-primary-container'
-                          : report.status === 'expired'
-                          ? 'bg-error-container text-on-error-container'
-                          : 'bg-green-50 text-status-success'
-                      }`}
-                    >
-                      {report.status.toUpperCase()}
-                    </span>
-                  </div>
+              {lostReports.map((report) => {
+                const photoSrc = report.photo_url ? formatImageUrl(report.photo_url) : '';
 
-                  <h3 className="font-bold text-text-primary text-headline-sm">{report.title}</h3>
-                  <p className="text-body-sm text-text-secondary line-clamp-2">{report.description}</p>
+                return (
+                  <div
+                    key={report.id}
+                    className="bg-surface-white rounded-2xl border border-border-subtle p-5 shadow-card space-y-4 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-label-sm font-semibold text-status-warning bg-amber-50 px-2.5 py-0.5 rounded-full">
+                          {report.category?.name}
+                        </span>
+                        <span
+                          className={`text-label-sm font-semibold px-2.5 py-0.5 rounded-full ${
+                            report.status === 'active'
+                              ? 'bg-primary-subtle text-primary-container'
+                              : report.status === 'expired'
+                              ? 'bg-error-container text-on-error-container'
+                              : 'bg-green-50 text-status-success'
+                          }`}
+                        >
+                          {report.status.toUpperCase()}
+                        </span>
+                      </div>
 
-                  <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-body-sm text-text-secondary">
-                    <span>Kedaluwarsa: {formatDate(report.expires_at)}</span>
-                    <Link
-                      to={`/item/lost/${report.id}`}
-                      className="font-semibold text-primary-container hover:text-primary-hover inline-flex items-center gap-1"
-                    >
-                      Detail
-                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                    </Link>
+                      <div className="flex items-start gap-3">
+                        <div className="w-16 h-16 rounded-xl bg-surface-container-low border border-border-subtle overflow-hidden flex-shrink-0 flex items-center justify-center">
+                          {photoSrc ? (
+                            <img
+                              src={photoSrc}
+                              alt={report.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-[28px] text-outline-variant">image</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-text-primary text-headline-sm truncate">{report.title}</h3>
+                          <p className="text-body-sm text-text-secondary line-clamp-2">{report.description}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-body-sm text-text-secondary">
+                      <span>Kedaluwarsa: {formatDate(report.expires_at)}</span>
+                      <Link
+                        to={`/item/lost/${report.id}`}
+                        className="font-semibold text-primary-container hover:text-primary-hover inline-flex items-center gap-1"
+                      >
+                        Detail
+                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-16 bg-surface-white rounded-2xl border border-border-subtle text-text-secondary space-y-3 shadow-card">

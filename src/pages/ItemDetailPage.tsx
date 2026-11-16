@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { FoundItem, LostReport } from '../types';
 import { ClaimModal } from '../components/ClaimModal';
+import { formatImageUrl } from '../utils/imageUrl';
 
 export const ItemDetailPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
@@ -12,6 +13,9 @@ export const ItemDetailPage: React.FC = () => {
 
   const [item, setItem] = useState<FoundItem | LostReport | null>(null);
   const [myClaim, setMyClaim] = useState<any>(null);
+  const [reporterClaims, setReporterClaims] = useState<any[]>([]);
+  const [copiedReporterCode, setCopiedReporterCode] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +30,25 @@ export const ItemDetailPage: React.FC = () => {
       }
 
       if (user && type === 'found') {
+        // Cek jika pengguna saat ini adalah pemilik/pengklaim
         try {
-          const claimsRes = await api.get('/claims/my-claims');
+          const claimsRes = await api.get('/claims/my');
           if (claimsRes.data.success) {
             const foundClaim = claimsRes.data.data.find((c: any) => c.found_item_id === id);
             if (foundClaim) setMyClaim(foundClaim);
+          }
+        } catch {
+          // ignore
+        }
+
+        // Cek jika pengguna saat ini adalah pelapor barang temuan
+        try {
+          const reportsRes = await api.get('/items/user/my-reports');
+          if (reportsRes.data.success) {
+            const myReport = reportsRes.data.data?.foundItems?.find((f: any) => f.id === id);
+            if (myReport?.claims && myReport.claims.length > 0) {
+              setReporterClaims(myReport.claims);
+            }
           }
         } catch {
           // ignore
@@ -70,6 +88,20 @@ export const ItemDetailPage: React.FC = () => {
   const isFound = type === 'found';
   const foundItem = isFound ? (item as FoundItem) : null;
   const lostReport = !isFound ? (item as LostReport) : null;
+
+  const isReporter = Boolean(
+    user &&
+      item &&
+      (('reporter_id' in item && item.reporter_id === user.id) ||
+        (item.reporter && item.reporter.id === user.id))
+  );
+
+  const allClaims = reporterClaims.length > 0 ? reporterClaims : (foundItem?.claims || []);
+  const activeReporterClaim = isReporter && allClaims.length > 0 ? allClaims[0] : null;
+
+  const photoUrl = 'photo_url' in (item || {}) && (item as any)?.photo_url
+    ? formatImageUrl((item as any).photo_url)
+    : '';
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -131,11 +163,12 @@ export const ItemDetailPage: React.FC = () => {
       <div className="bg-surface-white rounded-2xl border border-border-subtle shadow-card overflow-hidden grid grid-cols-1 md:grid-cols-2">
         {/* Left Column: Photo */}
         <div className="bg-surface-container-low flex items-center justify-center min-h-[350px] relative p-6">
-          {'photo_url' in item && item.photo_url ? (
+          {photoUrl && !imageError ? (
             <img
-              src={item.photo_url}
+              src={photoUrl}
               alt={item.title}
               className="max-h-[420px] w-full object-contain rounded-xl shadow-card"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="text-center text-text-secondary space-y-2">
@@ -274,7 +307,7 @@ export const ItemDetailPage: React.FC = () => {
           <div className="pt-6 border-t border-border-subtle space-y-4">
             {isFound && foundItem && (
               <div>
-                {/* Jika Pengguna ini memiliki tiket klaim aktif untuk barang ini */}
+                {/* Jika Pengguna ini memiliki tiket klaim aktif untuk barang ini (Pemilik/Pengklaim) */}
                 {myClaim ? (
                   <div className="bg-primary-darker text-white p-5 rounded-2xl border border-white/10 shadow-floating space-y-4">
                     <div className="flex items-center justify-between">
@@ -309,6 +342,72 @@ export const ItemDetailPage: React.FC = () => {
                       <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-tertiary-fixed-dim flex items-center justify-center gap-1.5">
                         <span className="material-symbols-outlined text-[18px]">verified</span>
                         Status: Barang Sudah Diterima Secara Fisik
+                      </div>
+                    )}
+                  </div>
+                ) : activeReporterClaim ? (
+                  /* Tampilan Khusus Pelapor Barang Temuan Saat Barang Diklaim */
+                  <div className="bg-purple-950 text-white p-6 rounded-2xl border border-purple-400/40 shadow-floating space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[22px] text-amber-300">verified_user</span>
+                        <span className="text-label-sm font-bold text-amber-300 uppercase tracking-wider">
+                          KODE UNIK SERAH TERIMA (PELAPOR &amp; FO)
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-amber-300">
+                        {activeReporterClaim.status === 'handed_over' || foundItem.status === 'completed'
+                          ? 'Selesai Diserahkan'
+                          : 'Siap Dicocokkan di Loket FO'}
+                      </span>
+                    </div>
+
+                    <p className="text-body-sm text-purple-200">
+                      Laporan barang temuan Anda telah diklaim dan verifikasinya cocok. Gunakan kode unik 6-karakter berikut untuk dicocokkan bersama petugas loket Front Office saat penerima/pemilik mengambil barang fisik.
+                    </p>
+
+                    <div className="text-center py-3 bg-white/5 rounded-xl border border-white/10 space-y-1">
+                      <span className="text-[11px] font-bold text-purple-200 uppercase tracking-widest block">
+                        CLAIM CODE RESMI (6-KARAKTER)
+                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-3xl font-mono font-black text-amber-300 tracking-widest">
+                          {activeReporterClaim.claim_code}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(activeReporterClaim.claim_code);
+                            setCopiedReporterCode(true);
+                            setTimeout(() => setCopiedReporterCode(false), 2000);
+                          }}
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          title="Salin Kode"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {copiedReporterCode ? 'check' : 'content_copy'}
+                          </span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-purple-200 pt-1">
+                        Kode unik ini sama persis dengan yang tampil pada loket Front Office ({foundItem.storage_location?.name || 'FO Kampus'})
+                      </p>
+                    </div>
+
+                    {/* Info Pengklaim jika tersedia */}
+                    {activeReporterClaim.claimant && (
+                      <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-body-sm space-y-1">
+                        <span className="text-label-sm font-semibold text-purple-200 block">
+                          Identitas Pemilik / Pengklaim:
+                        </span>
+                        <div className="font-bold text-white">
+                          {activeReporterClaim.claimant.name}
+                          {activeReporterClaim.claimant.nim ? ` (${activeReporterClaim.claimant.nim})` : ''}
+                        </div>
+                        {activeReporterClaim.claimed_answer && (
+                          <div className="pt-1 text-label-sm text-purple-100">
+                            Jawaban Verifikasi Pemilik: <span className="italic font-medium text-amber-200">"{activeReporterClaim.claimed_answer}"</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -59,10 +59,24 @@ export const ReportFoundPage: React.FC = () => {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 2 * 1024 * 1024) {
-        setErrorMessage('Ukuran file foto melebihi batas maksimal 2MB!');
+
+      // Validasi tipe file gambar (MIME & Ekstensi) di sisi client
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+
+      if (!allowedTypes.includes(file.type) || !fileExt || !allowedExtensions.includes(fileExt)) {
+        setErrorMessage('Format file tidak didukung! Hanya file gambar (JPEG, PNG, WebP) yang diperbolehkan.');
+        e.target.value = '';
         return;
       }
+
+      if (file.size > 2 * 1024 * 1024) {
+        setErrorMessage('Ukuran file foto melebihi batas maksimal 2MB!');
+        e.target.value = '';
+        return;
+      }
+
       setErrorMessage(null);
       setPhoto(file);
       setPhotoPreview(URL.createObjectURL(file));

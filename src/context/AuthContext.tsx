@@ -26,16 +26,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
+    const saved = sessionStorage.getItem('user') || localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem('token') || localStorage.getItem('token'));
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const refreshMe = async () => {
     try {
-      const savedToken = localStorage.getItem('token');
+      const savedToken = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!savedToken) {
         setIsLoading(false);
         return;
@@ -44,12 +44,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (res.data.success) {
         setUser(res.data.data.user);
         setQuota(res.data.data.quota);
-        localStorage.setItem('user', JSON.stringify(res.data.data.user));
+        sessionStorage.setItem('user', JSON.stringify(res.data.data.user));
+        localStorage.removeItem('user');
       }
     } catch (err: any) {
       console.warn('Gagal memuat profil auth me:', err);
       // Jika token kedaluwarsa atau tidak valid (401), bersihkan sesi
       if (err.response?.status === 401) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
@@ -66,8 +69,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    sessionStorage.setItem('token', newToken);
+    sessionStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(newToken);
     setUser(newUser);
     refreshMe();
@@ -86,8 +91,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const res = await api.post('/auth/google', payload);
     if (res.data.success) {
       const { token: newToken, user: newUser } = res.data.data;
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      sessionStorage.setItem('token', newToken);
+      sessionStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setToken(newToken);
       setUser(newUser);
       await refreshMe();
@@ -108,7 +115,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (res.data.success) {
       const updatedUser = res.data.data.user;
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.removeItem('user');
       await refreshMe();
     } else {
       throw new Error(res.data.message || 'Gagal memperbarui profil');
@@ -116,6 +124,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);
