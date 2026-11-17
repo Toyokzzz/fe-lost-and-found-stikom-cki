@@ -18,11 +18,13 @@ export const ItemDetailPage: React.FC = () => {
   const [imageError, setImageError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [isHandedOverSuccess, setIsHandedOverSuccess] = useState(false);
+  const [handoverToast, setHandoverToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
-  const fetchDetail = async () => {
-    setLoading(true);
+  const fetchDetail = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get(`/items/${type}/${id}`);
       if (res.data.success) {
@@ -57,7 +59,7 @@ export const ItemDetailPage: React.FC = () => {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Gagal memuat detail barang.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -71,17 +73,35 @@ export const ItemDetailPage: React.FC = () => {
   };
 
   const handleHandoverByClaimId = async (claimId: string) => {
-    if (!claimId) return;
-    if (!confirm('Konfirmasi bahwa barang ini sudah diserahterimakan / sudah diklaim oleh pemilik sahnya?')) {
-      return;
-    }
+    if (!claimId || completing || isHandedOverSuccess) return;
 
+    // Sekali klik langsung memproses dan mengunci tombol
     setCompleting(true);
     try {
       const res = await api.post('/claims/complete', { claim_id: claimId });
       if (res.data.success) {
-        alert('Terima kasih! Status serah terima berhasil dikonfirmasi. Barang resmi berstatus selesai.');
-        await fetchDetail();
+        setIsHandedOverSuccess(true);
+        setHandoverToast('Terima kasih! Status serah terima berhasil dikonfirmasi. Barang resmi berstatus selesai.');
+
+        // Optimistic update state secara instan
+        setMyClaim((prev: any) => (prev ? { ...prev, status: 'handed_over' } : null));
+        setItem((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                status: 'completed',
+                active_claim: prev.active_claim
+                  ? { ...prev.active_claim, status: 'handed_over' }
+                  : null,
+              }
+            : null
+        );
+        setReporterClaims((prev: any[]) =>
+          prev.map((c) => (c.id === claimId ? { ...c, status: 'handed_over' } : c))
+        );
+
+        // Sinkronisasi data di latar belakang tanpa flicker
+        await fetchDetail(true);
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal menyelesaikan serah terima.');
@@ -118,6 +138,14 @@ export const ItemDetailPage: React.FC = () => {
     (item as any)?.active_claim?.claim_code ||
     myClaim?.claim_code ||
     (isReporter ? activeReporterClaim?.claim_code : null);
+
+  const isAlreadyHandedOver = Boolean(
+    isHandedOverSuccess ||
+      foundItem?.status === 'completed' ||
+      myClaim?.status === 'handed_over' ||
+      (item as any)?.active_claim?.status === 'handed_over' ||
+      activeReporterClaim?.status === 'handed_over'
+  );
 
   const photoUrl = 'photo_url' in (item || {}) && (item as any)?.photo_url
     ? formatImageUrl((item as any).photo_url)
@@ -424,6 +452,22 @@ export const ItemDetailPage: React.FC = () => {
 
           {/* Action Footer */}
           <div className="pt-6 border-t border-border-subtle space-y-4">
+            {/* Inline Notification Toast saat sekali klik berhasil */}
+            {handoverToast && (
+              <div className="p-3.5 rounded-xl bg-green-50 border border-green-300 text-green-950 font-semibold text-label-sm flex items-center justify-between shadow-card">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-status-success">check_circle</span>
+                  <span>{handoverToast}</span>
+                </div>
+                <button
+                  onClick={() => setHandoverToast(null)}
+                  className="text-sm opacity-60 hover:opacity-100 font-bold px-1.5"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {isFound && foundItem && (
               <div>
                 {/* Jika Pengguna ini memiliki tiket klaim aktif untuk barang ini (Pemilik/Pengklaim) */}
@@ -434,7 +478,7 @@ export const ItemDetailPage: React.FC = () => {
                         TIKET KLAIM ANDA
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-tertiary-fixed-dim">
-                        {myClaim.status === 'handed_over' ? 'Selesai Diserahkan' : 'Menunggu Serah Terima FO'}
+                        {isAlreadyHandedOver ? 'Selesai Diserahkan' : 'Menunggu Serah Terima FO'}
                       </span>
                     </div>
 
@@ -448,11 +492,11 @@ export const ItemDetailPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {myClaim.status !== 'handed_over' ? (
+                    {!isAlreadyHandedOver ? (
                       <button
                         onClick={handleCompleteHandover}
-                        disabled={completing}
-                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2"
+                        disabled={completing || isAlreadyHandedOver}
+                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 disabled:opacity-50 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2"
                       >
                         <span className="material-symbols-outlined text-[20px]">task_alt</span>
                         {completing ? 'Mengonfirmasi Penerimaan...' : 'Barang Sudah Diterima'}
@@ -475,9 +519,7 @@ export const ItemDetailPage: React.FC = () => {
                         </span>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-amber-300">
-                        {activeReporterClaim.status === 'handed_over' || foundItem.status === 'completed'
-                          ? 'Selesai Diserahkan'
-                          : 'Siap Dicocokkan di Loket FO'}
+                        {isAlreadyHandedOver ? 'Selesai Diserahkan' : 'Siap Dicocokkan di Loket FO'}
                       </span>
                     </div>
 
@@ -531,11 +573,11 @@ export const ItemDetailPage: React.FC = () => {
                     )}
 
                     {/* Tombol Konfirmasi Barang Sudah Diklaim (Dipindahkan dari Admin FO ke Pelapor) */}
-                    {activeReporterClaim.status !== 'handed_over' && foundItem.status !== 'completed' ? (
+                    {!isAlreadyHandedOver ? (
                       <button
                         onClick={() => handleHandoverByClaimId(activeReporterClaim.id)}
-                        disabled={completing}
-                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
+                        disabled={completing || isAlreadyHandedOver}
+                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 disabled:opacity-50 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
                       >
                         <span className="material-symbols-outlined text-[20px]">task_alt</span>
                         {completing ? 'Memproses Konfirmasi...' : 'Konfirmasi: Barang Sudah Diklaim / Diserahkan'}

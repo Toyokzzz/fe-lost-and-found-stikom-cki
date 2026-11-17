@@ -68,7 +68,27 @@ export const MyHistoryPage: React.FC = () => {
       });
 
       if (res.data.success) {
+        const claimId = selectedClaimForHandover.id;
         setSelectedClaimForHandover(null);
+        // Optimistic update instan agar tombol langsung menjadi "Selesai Diserahkan"
+        setClaims((prev) =>
+          prev.map((c) =>
+            c.id === claimId
+              ? { ...c, status: 'handed_over', handed_over_at: new Date().toISOString() }
+              : c
+          )
+        );
+        setFoundItems((prev) =>
+          prev.map((f) => ({
+            ...f,
+            status: f.claims?.some((c) => c.id === claimId) ? 'completed' : f.status,
+            claims: f.claims?.map((c) =>
+              c.id === claimId
+                ? { ...c, status: 'handed_over', handed_over_at: new Date().toISOString() }
+                : c
+            ),
+          }))
+        );
         await fetchHistory();
       }
     } catch (err: any) {
