@@ -45,6 +45,20 @@ export interface ReporterProfile {
   email?: string;
 }
 
+export interface ActiveClaimInfo {
+  id?: string;
+  claim_code: string;
+  status: string;
+  claimed_at?: string;
+  handed_over_at?: string;
+  claimant_name?: string | null;
+  claimant_nim?: string | null;
+  claimant_prodi?: string | null;
+  claimant_semester?: number | null;
+  claimant_kelas?: string | null;
+  claimant?: ReporterProfile;
+}
+
 export interface FoundItem {
   id: string;
   reporter_id: string;
@@ -63,6 +77,7 @@ export interface FoundItem {
   storage_location?: StorageLocation;
   reporter?: ReporterProfile;
   claims?: Claim[];
+  active_claim?: ActiveClaimInfo | null;
   item_type?: 'found';
 }
 

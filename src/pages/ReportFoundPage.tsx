@@ -211,10 +211,10 @@ export const ReportFoundPage: React.FC = () => {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Dompet Lipat Hitam, Jaket Hoodie Abu-abu, Earphone TWS"
+              onChange={(e) => setTitle(e.target.value.toUpperCase())}
+              placeholder="Contoh: DOMPET LIPAT HITAM, JAKET HOODIE ABU-ABU, EARPHONE TWS"
               required
-              className="input-field"
+              className="input-field uppercase"
             />
           </div>
 
@@ -267,10 +267,10 @@ export const ReportFoundPage: React.FC = () => {
             <input
               type="text"
               value={locationFound}
-              onChange={(e) => setLocationFound(e.target.value)}
-              placeholder="Contoh: Meja Lab Komputer 3 Lantai 2, Kantin Belakang dekat dispenser"
+              onChange={(e) => setLocationFound(e.target.value.toUpperCase())}
+              placeholder="Contoh: MEJA LAB KOMPUTER 3 LANTAI 2, KANTIN BELAKANG DEKAT DISPENSER"
               required
-              className="input-field"
+              className="input-field uppercase"
             />
           </div>
 
@@ -282,10 +282,10 @@ export const ReportFoundPage: React.FC = () => {
             <textarea
               rows={3}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.toUpperCase())}
               placeholder="Tuliskan gambaran umum barang (warna, merk umum, kondisi saat ditemukan)..."
               required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card"
+              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase"
             />
           </div>
 
@@ -296,15 +296,15 @@ export const ReportFoundPage: React.FC = () => {
               1 Pertanyaan Validasi untuk Pemilik Asli <span className="text-status-error">*</span>
             </label>
             <p className="text-body-sm text-purple-800 leading-relaxed">
-              Tuliskan 1 pertanyaan yang hanya diketahui oleh pemilik asli barang (contoh: "Apa merk stiker di bagian belakang laptop?", "Berapa lembar uang pecahan 50 ribu di dalam dompet?").
+              Tuliskan 1 pertanyaan yang hanya diketahui oleh pemilik asli barang (contoh: "APA MERK STIKER DI BAGIAN BELAKANG LAPTOP?", "BERAPA LEMBAR UANG PECAHAN 50 RIBU DI DALAM DOMPET?").
             </p>
             <input
               type="text"
               value={validationQuestion}
-              onChange={(e) => setValidationQuestion(e.target.value)}
-              placeholder="Contoh: Apa gantungan kunci yang terpasang atau stiker di barang ini?"
+              onChange={(e) => setValidationQuestion(e.target.value.toUpperCase())}
+              placeholder="Contoh: APA GANTUNGAN KUNCI YANG TERPASANG ATAU STIKER DI BARANG INI?"
               required
-              className="input-field border-purple-300 focus:ring-purple-500"
+              className="input-field border-purple-300 focus:ring-purple-500 uppercase"
             />
           </div>
 
@@ -319,10 +319,10 @@ export const ReportFoundPage: React.FC = () => {
             <textarea
               rows={3}
               value={hiddenDetail}
-              onChange={(e) => setHiddenDetail(e.target.value)}
-              placeholder="Contoh: Gantungan boneka pikachu kuning dan ada bekas goresan huruf K di baliknya..."
+              onChange={(e) => setHiddenDetail(e.target.value.toUpperCase())}
+              placeholder="Contoh: GANTUNGAN BONEKA PIKACHU KUNING DAN ADA BEKAS GORESAN HURUF K DI BALIKNYA..."
               required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card"
+              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card uppercase"
             />
           </div>
 

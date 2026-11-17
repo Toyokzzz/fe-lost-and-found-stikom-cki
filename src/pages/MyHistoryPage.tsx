@@ -363,6 +363,15 @@ export const MyHistoryPage: React.FC = () => {
                           <p className="text-[11px] text-purple-800">
                             Cocokkan kode ini dengan loket Front Office &amp; penerima barang.
                           </p>
+                          {itemClaim.status !== 'handed_over' && item.status !== 'completed' && (
+                            <button
+                              onClick={() => setSelectedClaimForHandover(itemClaim)}
+                              className="w-full mt-2 py-2 px-3 rounded-lg bg-status-success hover:opacity-90 text-white font-semibold text-label-sm shadow-card flex items-center justify-center gap-1.5 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                              Konfirmasi Barang Sudah Diklaim / Diserahkan
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

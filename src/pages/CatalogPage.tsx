@@ -178,7 +178,7 @@ export const CatalogPage: React.FC = () => {
           {/* Status */}
           <div>
             <label className="block text-label-sm font-medium text-text-secondary mb-1">
-              Status Laporan
+              Status Laporan Barang
             </label>
             <select
               value={status}
@@ -186,9 +186,9 @@ export const CatalogPage: React.FC = () => {
               className="input-field"
             >
               <option value="">Semua Status</option>
-              <option value="active">Aktif / Tersedia</option>
-              <option value="claimed">Dalam Proses Klaim</option>
-              <option value="completed">Selesai / Sudah Diambil</option>
+              <option value="active">Aktif</option>
+              <option value="claimed">Dalam Proses</option>
+              <option value="completed">Selesai</option>
             </select>
           </div>
 

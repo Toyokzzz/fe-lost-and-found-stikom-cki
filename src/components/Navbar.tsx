@@ -45,7 +45,6 @@ export const Navbar: React.FC = () => {
   } else if (isFO) {
     navItems = [
       { to: '/admin/fo', label: 'Panel Admin FO', icon: 'verified_user' },
-      { to: '/catalog', label: 'Katalog Barang', icon: 'grid_view' },
       { to: '/profile', label: 'Profil', icon: 'person' },
     ];
   } else {

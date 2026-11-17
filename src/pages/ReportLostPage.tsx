@@ -212,10 +212,10 @@ export const ReportLostPage: React.FC = () => {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Kunci Motor Vario dengan Gantungan Kulit Hitam"
+              onChange={(e) => setTitle(e.target.value.toUpperCase())}
+              placeholder="Contoh: KUNCI MOTOR VARIO DENGAN GANTUNGAN KULIT HITAM"
               required
-              className="input-field"
+              className="input-field uppercase"
             />
           </div>
 
@@ -263,10 +263,10 @@ export const ReportLostPage: React.FC = () => {
             <input
               type="text"
               value={lastSeenLocation}
-              onChange={(e) => setLastSeenLocation(e.target.value)}
-              placeholder="Contoh: Parkiran Motor Barat, Kantin Rektorat, atau Toilet Lantai 3"
+              onChange={(e) => setLastSeenLocation(e.target.value.toUpperCase())}
+              placeholder="Contoh: PARKIRAN MOTOR BARAT, KANTIN REKTORAT, ATAU TOILET LANTAI 3"
               required
-              className="input-field"
+              className="input-field uppercase"
             />
           </div>
 
@@ -278,10 +278,10 @@ export const ReportLostPage: React.FC = () => {
             <textarea
               rows={3}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.toUpperCase())}
               placeholder="Tuliskan ciri fisik umum barang (warna, merk, stiker yang terlihat)..."
               required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card"
+              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase"
             />
           </div>
 
@@ -296,10 +296,10 @@ export const ReportLostPage: React.FC = () => {
             <textarea
               rows={3}
               value={hiddenDetail}
-              onChange={(e) => setHiddenDetail(e.target.value)}
-              placeholder="Contoh: Ada goresan huruf 'T' di bagian belakang gantungan kunci..."
+              onChange={(e) => setHiddenDetail(e.target.value.toUpperCase())}
+              placeholder="Contoh: ADA GORESAN HURUF 'T' DI BAGIAN BELAKANG GANTUNGAN KUNCI..."
               required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card"
+              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card uppercase"
             />
           </div>
 

@@ -67,15 +67,20 @@ export const ItemDetailPage: React.FC = () => {
 
   const handleCompleteHandover = async () => {
     if (!myClaim) return;
-    if (!confirm('Konfirmasi bahwa barang fisik ini telah Anda terima secara langsung di loket Front Office?')) {
+    handleHandoverByClaimId(myClaim.id);
+  };
+
+  const handleHandoverByClaimId = async (claimId: string) => {
+    if (!claimId) return;
+    if (!confirm('Konfirmasi bahwa barang ini sudah diserahterimakan / sudah diklaim oleh pemilik sahnya?')) {
       return;
     }
 
     setCompleting(true);
     try {
-      const res = await api.post('/claims/complete', { claim_id: myClaim.id });
+      const res = await api.post('/claims/complete', { claim_id: claimId });
       if (res.data.success) {
-        alert('Terima kasih! Status barang berhasil diubah menjadi selesai/diserahkan.');
+        alert('Terima kasih! Status serah terima berhasil dikonfirmasi. Barang resmi berstatus selesai.');
         await fetchDetail();
       }
     } catch (err: any) {
@@ -277,6 +282,44 @@ export const ItemDetailPage: React.FC = () => {
               </div>
             )}
 
+            {/* Status Selesai Banner untuk semua user saat melihat detail (Requirement #4) */}
+            {item.status === 'completed' && (
+              <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 text-green-950 space-y-1 shadow-card">
+                <div className="flex items-center gap-2 font-bold text-headline-sm text-status-success">
+                  <span className="material-symbols-outlined text-[24px]">verified</span>
+                  Status: Selesai
+                </div>
+                <p className="text-body-sm text-green-800 leading-relaxed">
+                  Barang ini telah resmi selesai diserahterimakan dan diklaim oleh pemilik sahnya.
+                </p>
+              </div>
+            )}
+
+            {/* Nama Pengklaim Barang untuk semua user saat melihat detail (Requirement #5) */}
+            {((item as any).active_claim?.claimant_name || activeReporterClaim?.claimant?.name) && (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-1.5 shadow-card">
+                <span className="text-label-eyebrow uppercase text-purple-900 font-bold block flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-purple-700">person_check</span>
+                  Pengklaim Barang:
+                </span>
+                <div className="font-bold text-headline-sm text-purple-950">
+                  {(item as any).active_claim?.claimant_name || activeReporterClaim?.claimant?.name}
+                  {((item as any).active_claim?.claimant_nim || activeReporterClaim?.claimant?.nim)
+                    ? ` (${(item as any).active_claim?.claimant_nim || activeReporterClaim?.claimant?.nim})`
+                    : ''}
+                </div>
+                <div className="text-label-sm text-purple-800">
+                  {[
+                    (item as any).active_claim?.claimant_prodi || activeReporterClaim?.claimant?.prodi,
+                    (item as any).active_claim?.claimant_semester ? `Semester ${(item as any).active_claim.claimant_semester}` : null,
+                    (item as any).active_claim?.claimant_kelas ? `Kelas ${(item as any).active_claim.claimant_kelas}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+              </div>
+            )}
+
             {/* Pertanyaan Validasi Penemu (Requirement #4 & #6) */}
             {isFound && foundItem?.validation_question && (
               <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-body-sm space-y-1">
@@ -408,6 +451,23 @@ export const ItemDetailPage: React.FC = () => {
                             Jawaban Verifikasi Pemilik: <span className="italic font-medium text-amber-200">"{activeReporterClaim.claimed_answer}"</span>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Tombol Konfirmasi Barang Sudah Diklaim (Dipindahkan dari Admin FO ke Pelapor) */}
+                    {activeReporterClaim.status !== 'handed_over' && foundItem.status !== 'completed' ? (
+                      <button
+                        onClick={() => handleHandoverByClaimId(activeReporterClaim.id)}
+                        disabled={completing}
+                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                        {completing ? 'Memproses Konfirmasi...' : 'Konfirmasi: Barang Sudah Diklaim / Diserahkan'}
+                      </button>
+                    ) : (
+                      <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
+                        <span className="material-symbols-outlined text-[18px]">verified</span>
+                        Status: Barang Sudah Selesai Diserahkan
                       </div>
                     )}
                   </div>

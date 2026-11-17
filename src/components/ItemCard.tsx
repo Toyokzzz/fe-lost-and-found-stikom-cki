@@ -11,7 +11,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
   const [imageError, setImageError] = useState(false);
   const isFound = item.item_type === 'found';
   const location = isFound ? (item as any).location_found : (item as any).last_seen_location;
-  const photoUrl = 'photo_url' in item && item.photo_url ? formatImageUrl(item.photo_url) : '';
+  const rawPhoto = 'photo_url' in item && item.photo_url ? (item.photo_url as string) : '';
+  const photoUrl = rawPhoto ? formatImageUrl(rawPhoto) : '';
+  const activeClaim = (item as any).active_claim;
 
   // Format tanggal Indonesia
   const formatDate = (dateString: string) => {
@@ -130,6 +132,30 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <span className="material-symbols-outlined text-[16px] text-text-secondary flex-shrink-0">location_on</span>
             <span className="truncate">{location}</span>
           </div>
+
+          {/* Informasi Pengklaim & Kode Unik Klaim jika ada (Requirement #5 & #8) */}
+          {activeClaim?.claimant_name && (
+            <div className="p-2.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-900 space-y-1">
+              <div className="flex items-center gap-1.5 text-label-sm">
+                <span className="material-symbols-outlined text-[16px] text-purple-600">person_check</span>
+                <span className="truncate">
+                  Pengklaim: <strong className="font-bold text-purple-950">{activeClaim.claimant_name}</strong>
+                  {activeClaim.claimant_nim ? ` (${activeClaim.claimant_nim})` : ''}
+                </span>
+              </div>
+              {activeClaim.claim_code && (
+                <div className="flex items-center justify-between pt-1 border-t border-purple-200/60">
+                  <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">key</span>
+                    Kode Unik Klaim:
+                  </span>
+                  <span className="font-mono font-black text-xs text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 tracking-wider">
+                    {activeClaim.claim_code}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tanggal & Link */}
           <div className="flex items-center justify-between pt-1">

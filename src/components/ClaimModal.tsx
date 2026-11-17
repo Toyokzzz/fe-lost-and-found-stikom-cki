@@ -104,10 +104,10 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
                 <textarea
                   rows={4}
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  onChange={(e) => setAnswer(e.target.value.toUpperCase())}
                   placeholder="Ketik jawaban Anda secara spesifik sesuai barang milik Anda..."
                   required
-                  className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card"
+                  className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase"
                 />
               </div>
 

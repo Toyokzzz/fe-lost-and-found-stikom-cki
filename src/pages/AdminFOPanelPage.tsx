@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { formatImageUrl } from '../utils/imageUrl';
 
 export const AdminFOPanelPage: React.FC = () => {
   const { user } = useAuth();
@@ -210,9 +211,12 @@ export const AdminFOPanelPage: React.FC = () => {
                     <div className="flex gap-4">
                       {item.photo_url ? (
                         <img
-                          src={item.photo_url}
+                          src={formatImageUrl(item.photo_url)}
                           alt={item.title}
                           className="w-24 h-24 rounded-xl object-cover border border-border-subtle shadow-card flex-shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
                         />
                       ) : (
                         <div className="w-24 h-24 rounded-xl bg-surface-container-low flex items-center justify-center text-text-secondary border border-border-subtle flex-shrink-0">
@@ -327,22 +331,18 @@ export const AdminFOPanelPage: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Tombol Aksi Serah Terima FO */}
-                            {claim.status !== 'handed_over' ? (
-                              <button
-                                onClick={() => handleVerifyHandover(claim.id, claim.claim_code)}
-                                disabled={actionLoading === claim.id}
-                                className="w-full h-11 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2"
-                              >
-                                <span className="material-symbols-outlined text-[18px]">verified</span>
-                                {actionLoading === claim.id ? 'Memproses Serah Terima...' : 'Cocokkan & Serah Terima'}
-                              </button>
+                            {/* Status Penyerahan (Tombol serah terima dipindah ke pelapor barang) */}
+                            {claim.status !== 'handed_over' && item.status !== 'completed' ? (
+                              <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
+                                <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
+                                Menunggu Konfirmasi Pelapor / Selesai
+                              </div>
                             ) : (
-                              <div className="p-2.5 rounded-lg bg-green-50 border border-green-200 text-green-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
+                              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
                                 <span className="material-symbols-outlined text-[18px] text-status-success">
                                   task_alt
                                 </span>
-                                Telah Diserahkan Fisik di Loket FO
+                                Telah Dikonfirmasi Selesai / Diserahkan
                               </div>
                             )}
                           </div>

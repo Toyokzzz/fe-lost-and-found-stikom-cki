@@ -39,5 +39,14 @@ export const formatImageUrl = (photoUrl?: string | null): string => {
     }
   }
 
+  // Di development / localhost jika port frontend bukan 5000, arahkan ke backend port 5000
+  if (typeof window !== 'undefined') {
+    const isLocalhost =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost && window.location.port !== '5000') {
+      return `http://localhost:5000${cleanUrl}`;
+    }
+  }
+
   return cleanUrl;
 };
