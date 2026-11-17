@@ -9,7 +9,7 @@ import { formatImageUrl } from '../utils/imageUrl';
 export const ItemDetailPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdminDev, isAdminFO } = useAuth();
 
   const [item, setItem] = useState<FoundItem | LostReport | null>(null);
   const [myClaim, setMyClaim] = useState<any>(null);
@@ -103,6 +103,19 @@ export const ItemDetailPage: React.FC = () => {
 
   const allClaims = reporterClaims.length > 0 ? reporterClaims : (foundItem?.claims || []);
   const activeReporterClaim = isReporter && allClaims.length > 0 ? allClaims[0] : null;
+
+  // Kode unik hanya boleh muncul untuk: user pengklaim, admin FO, dan admin Dev
+  const isClaimant = Boolean(
+    user &&
+      (myClaim ||
+        (item as any)?.active_claim?.claimant_id === user.id ||
+        (item as any)?.active_claim?.claimant?.id === user.id)
+  );
+  const canSeeClaimCode = Boolean(isAdminDev || isAdminFO || isClaimant);
+  const claimCodeToShow =
+    (item as any)?.active_claim?.claim_code ||
+    myClaim?.claim_code ||
+    (isReporter ? activeReporterClaim?.claim_code : null);
 
   const photoUrl = 'photo_url' in (item || {}) && (item as any)?.photo_url
     ? formatImageUrl((item as any).photo_url)
@@ -256,9 +269,9 @@ export const ItemDetailPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Informasi Pelapor dari Data Profil (Requirement #3) */}
+            {/* Informasi Pelapor dari Data Profil & Nomor WA (Requirement #3 & #4) */}
             {item.reporter && (
-              <div className="bg-surface-container-low border border-border-subtle rounded-xl p-4 space-y-1">
+              <div className="bg-surface-container-low border border-border-subtle rounded-xl p-4 space-y-2">
                 <span className="text-label-eyebrow uppercase text-text-secondary font-bold block">
                   Informasi Pelapor ({isFound ? 'Penemu' : 'Pemilik'}):
                 </span>
@@ -279,6 +292,24 @@ export const ItemDetailPage: React.FC = () => {
                     NIM: {item.reporter.nim}
                   </div>
                 )}
+                {/* Nomor WA Pelapor agar calon pengklaim bisa menghubungi pihak penemu barang */}
+                {item.reporter.phone && (
+                  <div className="pt-2 border-t border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
+                    <div className="flex items-center gap-1.5 text-label-sm font-semibold text-text-primary">
+                      <span className="material-symbols-outlined text-[18px] text-green-600">call</span>
+                      <span>No. WhatsApp: {item.reporter.phone}</span>
+                    </div>
+                    <a
+                      href={`https://wa.me/${item.reporter.phone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-status-success hover:bg-green-700 text-white font-semibold text-label-sm shadow-card transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">chat</span>
+                      Hubungi via WhatsApp
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -295,9 +326,9 @@ export const ItemDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Nama Pengklaim Barang untuk semua user saat melihat detail (Requirement #5) */}
+            {/* Nama Pengklaim Barang & Kode Unik (Kode unik khusus pengklaim, admin FO, dan admin Dev) */}
             {((item as any).active_claim?.claimant_name || activeReporterClaim?.claimant?.name) && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-1.5 shadow-card">
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-2 shadow-card">
                 <span className="text-label-eyebrow uppercase text-purple-900 font-bold block flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px] text-purple-700">person_check</span>
                   Pengklaim Barang:
@@ -317,6 +348,39 @@ export const ItemDetailPage: React.FC = () => {
                     .filter(Boolean)
                     .join(' · ')}
                 </div>
+
+                {/* Kode Unik Klaim di /item/found/ (HANYA untuk pengklaim, admin FO, dan admin Dev) */}
+                {claimCodeToShow && canSeeClaimCode && (
+                  <div className="pt-2.5 border-t border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider block flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px] text-purple-700">key</span>
+                        Kode Unik Klaim:
+                      </span>
+                      <span className="text-[11px] text-purple-700">
+                        Cocokkan kode unik 6-karakter ini di loket Front Office saat serah terima fisik barang.
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-black text-xl text-amber-950 bg-amber-200/90 px-3.5 py-1 rounded-lg border border-amber-400 tracking-widest shadow-sm">
+                        {claimCodeToShow}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(claimCodeToShow);
+                          setCopiedReporterCode(true);
+                          setTimeout(() => setCopiedReporterCode(false), 2000);
+                        }}
+                        className="p-1.5 rounded-lg bg-purple-200/70 hover:bg-purple-200 text-purple-900 transition-colors"
+                        title="Salin Kode"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {copiedReporterCode ? 'check' : 'content_copy'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -468,6 +532,68 @@ export const ItemDetailPage: React.FC = () => {
                       <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
                         <span className="material-symbols-outlined text-[18px]">verified</span>
                         Status: Barang Sudah Selesai Diserahkan
+                      </div>
+                    )}
+                  </div>
+                ) : (isAdminFO || isAdminDev) && claimCodeToShow ? (
+                  /* Tampilan Khusus Petugas Admin FO & Admin Developer */
+                  <div className="bg-indigo-950 text-white p-6 rounded-2xl border border-indigo-400/40 shadow-floating space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[22px] text-amber-300">verified_user</span>
+                        <span className="text-label-sm font-bold text-amber-300 uppercase tracking-wider">
+                          PANEL LOKET FO &amp; ADMIN
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-amber-300">
+                        {foundItem.status === 'completed'
+                          ? 'Selesai / Terklaim'
+                          : 'Terklaim (Loket FO)'}
+                      </span>
+                    </div>
+
+                    <div className="text-center py-3 bg-white/5 rounded-xl border border-white/10 space-y-1">
+                      <span className="text-[11px] font-bold text-purple-200 uppercase tracking-widest block">
+                        CLAIM CODE RESMI (6-KARAKTER)
+                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-3xl font-mono font-black text-amber-300 tracking-widest">
+                          {claimCodeToShow}
+                        </span>
+                        <button
+                          onClick={() => {
+                            if (claimCodeToShow) {
+                              navigator.clipboard.writeText(claimCodeToShow);
+                              setCopiedReporterCode(true);
+                              setTimeout(() => setCopiedReporterCode(false), 2000);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          title="Salin Kode"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {copiedReporterCode ? 'check' : 'content_copy'}
+                          </span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-purple-200 pt-1">
+                        Pengklaim: {(item as any)?.active_claim?.claimant_name || activeReporterClaim?.claimant?.name || 'Mahasiswa'}
+                      </p>
+                    </div>
+
+                    {foundItem.status !== 'completed' && ((item as any)?.active_claim?.id || activeReporterClaim?.id) ? (
+                      <button
+                        onClick={() => handleHandoverByClaimId((item as any)?.active_claim?.id || activeReporterClaim?.id)}
+                        disabled={completing}
+                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                        {completing ? 'Memproses Serah Terima...' : 'Konfirmasi Selesai / Serah Terima FO'}
+                      </button>
+                    ) : (
+                      <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
+                        <span className="material-symbols-outlined text-[18px]">verified</span>
+                        Status: Barang Selesai / Terklaim Resmi
                       </div>
                     )}
                   </div>

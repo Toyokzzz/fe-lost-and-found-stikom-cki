@@ -2,18 +2,26 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ItemSummary } from '../types';
 import { formatImageUrl } from '../utils/imageUrl';
+import { useAuth } from '../context/AuthContext';
 
 interface ItemCardProps {
   item: ItemSummary;
 }
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
+  const { user, isAdminDev, isAdminFO } = useAuth();
   const [imageError, setImageError] = useState(false);
   const isFound = item.item_type === 'found';
   const location = isFound ? (item as any).location_found : (item as any).last_seen_location;
   const rawPhoto = 'photo_url' in item && item.photo_url ? (item.photo_url as string) : '';
   const photoUrl = rawPhoto ? formatImageUrl(rawPhoto) : '';
   const activeClaim = (item as any).active_claim;
+
+  // Kode unik hanya boleh muncul untuk: user pengklaim, admin FO, dan admin Dev
+  const isClaimant = Boolean(
+    user?.id && (activeClaim?.claimant_id === user.id || activeClaim?.claimant?.id === user.id)
+  );
+  const canSeeClaimCode = Boolean(isAdminDev || isAdminFO || isClaimant);
 
   // Format tanggal Indonesia
   const formatDate = (dateString: string) => {
@@ -106,25 +114,47 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
 
         <div className="pt-3 border-t border-border-subtle space-y-2 text-label-sm text-text-secondary">
-          {/* Informasi Pelapor dari Profil (Requirement #3) */}
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-surface-container-low border border-border-subtle">
-            <div className="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-              {item.reporter?.name?.charAt(0) || 'M'}
+          {/* Informasi Pelapor dari Profil & No WA (Requirement #3 & #4) */}
+          <div className="p-2.5 rounded-lg bg-surface-container-low border border-border-subtle space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                {item.reporter?.name?.charAt(0) || 'M'}
+              </div>
+              <div className="min-w-0 flex-1 leading-tight">
+                <span className="font-bold text-text-primary text-label-sm block truncate">
+                  {item.reporter?.name || 'Mahasiswa CKI'}
+                </span>
+                <span className="text-[11px] text-text-secondary block truncate">
+                  {[
+                    item.reporter?.prodi,
+                    item.reporter?.semester ? `Sem ${item.reporter.semester}` : null,
+                    item.reporter?.kelas ? `Kelas ${item.reporter.kelas}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || 'Profil Kampus CKI'}
+                </span>
+              </div>
             </div>
-            <div className="min-w-0 flex-1 leading-tight">
-              <span className="font-bold text-text-primary text-label-sm block truncate">
-                {item.reporter?.name || 'Mahasiswa CKI'}
-              </span>
-              <span className="text-[11px] text-text-secondary block truncate">
-                {[
-                  item.reporter?.prodi,
-                  item.reporter?.semester ? `Sem ${item.reporter.semester}` : null,
-                  item.reporter?.kelas ? `Kelas ${item.reporter.kelas}` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || 'Profil Kampus CKI'}
-              </span>
-            </div>
+
+            {/* Nomor WA Pelapor agar calon pengklaim bisa menghubungi */}
+            {item.reporter?.phone && (
+              <div className="pt-1 border-t border-border-subtle flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Kontak Pelapor:
+                </span>
+                <a
+                  href={`https://wa.me/${item.reporter.phone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-2 py-0.5 rounded border border-green-200 transition-colors"
+                  title="Hubungi Pelapor via WhatsApp"
+                >
+                  <span className="material-symbols-outlined text-[13px] text-green-600">chat</span>
+                  WA: {item.reporter.phone}
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Lokasi */}
@@ -133,7 +163,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             <span className="truncate">{location}</span>
           </div>
 
-          {/* Informasi Pengklaim & Kode Unik Klaim jika ada (Requirement #5 & #8) */}
+          {/* Informasi Pengklaim & Kode Unik Klaim (Hanya untuk pengklaim, admin FO, dan admin Dev) */}
           {activeClaim?.claimant_name && (
             <div className="p-2.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-900 space-y-1">
               <div className="flex items-center gap-1.5 text-label-sm">
@@ -143,7 +173,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
                   {activeClaim.claimant_nim ? ` (${activeClaim.claimant_nim})` : ''}
                 </span>
               </div>
-              {activeClaim.claim_code && (
+              {/* Kode unik HANYA muncul jika canSeeClaimCode (pengklaim, admin FO, admin dev) */}
+              {activeClaim.claim_code && canSeeClaimCode && (
                 <div className="flex items-center justify-between pt-1 border-t border-purple-200/60">
                   <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">key</span>

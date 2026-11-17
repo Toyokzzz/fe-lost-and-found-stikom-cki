@@ -47,10 +47,11 @@ export interface ReporterProfile {
 
 export interface ActiveClaimInfo {
   id?: string;
-  claim_code: string;
+  claim_code?: string | null;
   status: string;
   claimed_at?: string;
   handed_over_at?: string;
+  claimant_id?: string | null;
   claimant_name?: string | null;
   claimant_nim?: string | null;
   claimant_prodi?: string | null;

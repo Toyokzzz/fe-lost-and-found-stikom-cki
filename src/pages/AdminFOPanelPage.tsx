@@ -142,8 +142,8 @@ export const AdminFOPanelPage: React.FC = () => {
             className="input-field sm:w-56"
           >
             <option value="">Semua Status Barang</option>
-            <option value="claimed">Klaim Terbit (Menunggu Pengambilan)</option>
-            <option value="completed">Selesai / Sudah Diserahkan</option>
+            <option value="claimed">Terklaim (Menunggu Pengambilan)</option>
+            <option value="completed">Selesai / Terklaim (Sudah Diserahkan)</option>
             <option value="active">Belum Ada Klaim (Aktif)</option>
           </select>
         </div>
@@ -190,16 +190,16 @@ export const AdminFOPanelPage: React.FC = () => {
                   <span
                     className={`px-3 py-1 rounded-full text-label-sm font-bold ${
                       item.status === 'completed'
-                        ? 'bg-surface-container text-text-secondary border border-border-subtle'
+                        ? 'bg-green-50 text-status-success border border-green-200'
                         : item.status === 'claimed'
-                        ? 'bg-purple-50 text-purple-800 border border-purple-200 animate-pulse'
+                        ? 'bg-purple-50 text-purple-800 border border-purple-200'
                         : 'bg-primary-subtle text-primary border border-primary/20'
                     }`}
                   >
                     {item.status === 'completed'
-                      ? 'Selesai Diserahkan di Loket'
+                      ? 'Selesai / Terklaim'
                       : item.status === 'claimed'
-                      ? 'Dalam Proses Serah Terima Loket'
+                      ? 'Terklaim'
                       : 'Tersedia di Loket FO'}
                   </span>
                 </div>
@@ -234,7 +234,7 @@ export const AdminFOPanelPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Pelapor Profile Info (Requirement #3) */}
+                    {/* Pelapor Profile Info (Requirement #3 & #4) */}
                     <div className="p-3 rounded-xl bg-surface-container-low border border-border-subtle text-body-sm space-y-1">
                       <span className="text-label-eyebrow uppercase text-text-secondary font-bold block">
                         Pelapor Penemu:
@@ -248,6 +248,12 @@ export const AdminFOPanelPage: React.FC = () => {
                       {item.reporter?.nim && (
                         <div className="text-label-sm text-text-secondary font-mono">
                           NIM: {item.reporter.nim}
+                        </div>
+                      )}
+                      {item.reporter?.phone && (
+                        <div className="text-label-sm text-green-700 font-medium flex items-center gap-1 pt-1 border-t border-border-subtle mt-1">
+                          <span className="material-symbols-outlined text-[14px]">chat</span>
+                          <span>WhatsApp: {item.reporter.phone}</span>
                         </div>
                       )}
                     </div>
@@ -281,9 +287,9 @@ export const AdminFOPanelPage: React.FC = () => {
 
                   {/* Column 3: Data Klaim & Validasi Serah Terima FO */}
                   <div className="space-y-3 flex flex-col justify-between">
-                    {item.claims && item.claims.length > 0 ? (
+                    {((item.claims && item.claims.length > 0) || item.active_claim) ? (
                       <div className="space-y-3">
-                        {item.claims.map((claim: any) => (
+                        {((item.claims && item.claims.length > 0) ? item.claims : [item.active_claim]).map((claim: any) => (
                           <div
                             key={claim.id}
                             className="p-4 rounded-xl border border-purple-200 bg-purple-50/40 space-y-3"
@@ -315,7 +321,8 @@ export const AdminFOPanelPage: React.FC = () => {
                                 </div>
                               )}
                               {claim.claimant?.phone && (
-                                <div className="text-label-sm text-text-secondary">
+                                <div className="text-label-sm text-green-700 font-medium flex items-center gap-1 pt-0.5">
+                                  <span className="material-symbols-outlined text-[14px]">chat</span>
                                   WhatsApp: {claim.claimant.phone}
                                 </div>
                               )}
@@ -331,18 +338,28 @@ export const AdminFOPanelPage: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Status Penyerahan (Tombol serah terima dipindah ke pelapor barang) */}
+                            {/* Status Penyerahan & Aksi Verifikasi FO */}
                             {claim.status !== 'handed_over' && item.status !== 'completed' ? (
-                              <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
-                                <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
-                                Menunggu Konfirmasi Pelapor / Selesai
+                              <div className="space-y-2 pt-1">
+                                <div className="p-2.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-950 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
+                                  Status: Terklaim (Menunggu Penyerahan Fisik FO)
+                                </div>
+                                <button
+                                  onClick={() => handleVerifyHandover(claim.id, claim.claim_code)}
+                                  disabled={actionLoading === claim.id}
+                                  className="w-full py-2.5 px-4 rounded-xl bg-status-success hover:bg-green-700 text-white font-bold text-label-sm shadow-card transition-all flex items-center justify-center gap-2"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">verified</span>
+                                  {actionLoading === claim.id ? 'Memproses Serah Terima...' : 'Konfirmasi Selesai / Serah Terima'}
+                                </button>
                               </div>
                             ) : (
                               <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
                                 <span className="material-symbols-outlined text-[18px] text-status-success">
                                   task_alt
                                 </span>
-                                Telah Dikonfirmasi Selesai / Diserahkan
+                                Status: Selesai / Terklaim (Sudah Diserahkan)
                               </div>
                             )}
                           </div>
