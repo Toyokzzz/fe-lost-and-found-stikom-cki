@@ -434,14 +434,14 @@ export const AuthPage: React.FC = () => {
                 <h1 className="text-headline-lg font-headline-lg font-bold text-text-primary tracking-tight">
                   {loginTab === 'mahasiswa'
                     ? mode === 'register'
-                      ? 'Pendaftaran Mahasiswa'
+                      ? 'Pendaftaran Akun Pengguna'
                       : 'Masuk ke Sistem'
                     : 'Login Administrator'}
                 </h1>
                 <p className="text-body-sm font-body-sm text-text-secondary mt-1">
                   {loginTab === 'mahasiswa'
                     ? mode === 'register'
-                      ? 'Pendaftaran mandiri mahasiswa untuk sistem Lost & Found CKI.'
+                      ? 'Pendaftaran mandiri akun pengguna civitas akademika STIKOM CKI.'
                       : 'Masuk dengan akun Google Anda atau email & kata sandi terdaftar.'
                     : 'Khusus Admin Front Office dan Admin Developer.'}
                 </p>
@@ -475,8 +475,8 @@ export const AuthPage: React.FC = () => {
                     : 'text-text-secondary hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px]">school</span>
-                Mahasiswa
+                <span className="material-symbols-outlined text-[16px]">person</span>
+                User
               </button>
               <button
                 type="button"
@@ -488,7 +488,7 @@ export const AuthPage: React.FC = () => {
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
-                Admin / Petugas
+                Admin
               </button>
             </div>
 
@@ -602,7 +602,7 @@ export const AuthPage: React.FC = () => {
                         : 'text-text-secondary hover:text-on-surface'
                     }`}
                   >
-                    Daftar Mahasiswa
+                    Daftar Akun
                   </button>
                 </div>
 

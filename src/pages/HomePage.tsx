@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { ItemSummary } from '../types';
-import { ItemCard } from '../components/ItemCard';
 import { useAuth } from '../context/AuthContext';
 
 export const HomePage: React.FC = () => {
@@ -22,7 +20,6 @@ export const HomePage: React.FC = () => {
   }
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [latestItems, setLatestItems] = useState<ItemSummary[]>([]);
   const [stats, setStats] = useState({
     totalFound: 0,
     totalLost: 0,
@@ -34,18 +31,12 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [itemsRes, statsRes] = await Promise.allSettled([
-          api.get('/items?limit=6'),
-          api.get('/stats'),
-        ]);
-        if (itemsRes.status === 'fulfilled' && itemsRes.value.data.success) {
-          setLatestItems(itemsRes.value.data.data);
-        }
-        if (statsRes.status === 'fulfilled' && statsRes.value.data.success) {
-          setStats(statsRes.value.data.data);
+        const statsRes = await api.get('/stats');
+        if (statsRes.data?.success) {
+          setStats(statsRes.data.data);
         }
       } catch (err) {
-        console.warn('Gagal memuat data beranda:', err);
+        console.warn('Gagal memuat statistik beranda:', err);
       } finally {
         setLoading(false);
       }
@@ -241,43 +232,6 @@ export const HomePage: React.FC = () => {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* ─── Latest Items Showcase ────────────────────────── */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-headline-md font-bold text-text-primary">Laporan Terbaru di Kampus</h2>
-            <p className="text-body-sm text-text-secondary">Barang temuan dan laporan hilang yang baru masuk.</p>
-          </div>
-          <Link
-            to="/catalog"
-            className="inline-flex items-center gap-1.5 text-label-md font-semibold text-primary-container hover:text-primary-hover transition-colors"
-          >
-            Lihat Semua
-            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="h-64 rounded-xl bg-surface-container animate-pulse" />
-            ))}
-          </div>
-        ) : latestItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {latestItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-14 bg-surface-white rounded-xl border border-border-subtle">
-            <span className="material-symbols-outlined text-[48px] text-outline mb-3 block">inbox</span>
-            <p className="text-body-md font-medium text-text-secondary">Belum ada laporan barang saat ini.</p>
-            <p className="text-body-sm text-text-secondary mt-1">Jadilah yang pertama melaporkan barang temuan!</p>
-          </div>
-        )}
       </section>
     </div>
   );
