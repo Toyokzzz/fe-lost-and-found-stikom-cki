@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { ItemSummary } from '../types';
 import { ItemCard } from '../components/ItemCard';
@@ -8,6 +8,19 @@ import { useAuth } from '../context/AuthContext';
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+
+  // Proteksi Sesi Instan: Jika user sudah login, langsung arahkan tanpa glitch / flash render
+  if (!isLoading && user) {
+    const role = (user.role || '').toLowerCase();
+    const target =
+      role === 'admin_developer' || role === 'admin'
+        ? '/admin/dev'
+        : role === 'admin_fo'
+        ? '/admin/fo'
+        : '/catalog';
+    return <Navigate to={target} replace />;
+  }
+
   const [searchQuery, setSearchQuery] = useState('');
   const [latestItems, setLatestItems] = useState<ItemSummary[]>([]);
   const [stats, setStats] = useState({
@@ -17,20 +30,6 @@ export const HomePage: React.FC = () => {
     returnRate: '0%',
   });
   const [loading, setLoading] = useState(true);
-
-  // Proteksi Sesi & Auto-Redirect: Jika user sudah login (sesi valid), arahkan langsung ke katalog
-  useEffect(() => {
-    if (!isLoading && user) {
-      const role = (user.role || '').toLowerCase();
-      if (role === 'admin_developer' || role === 'admin') {
-        navigate('/admin/dev', { replace: true });
-      } else if (role === 'admin_fo') {
-        navigate('/admin/fo', { replace: true });
-      } else {
-        navigate('/catalog', { replace: true });
-      }
-    }
-  }, [user, isLoading, navigate]);
 
   useEffect(() => {
     const fetchData = async () => {

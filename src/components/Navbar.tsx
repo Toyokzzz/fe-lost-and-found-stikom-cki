@@ -28,10 +28,11 @@ export const Navbar: React.FC = () => {
         : 'text-text-secondary hover:text-on-surface hover:bg-surface-container-low'
     }`;
 
-  // Role-based Nav Links
+  // Role-based Nav Links & Home Link
   const role = (user.role || '').toLowerCase();
   const isFO = role === 'admin_fo';
   const isDev = role === 'admin_developer' || role === 'admin';
+  const homePath = isDev ? '/admin/dev' : isFO ? '/admin/fo' : '/catalog';
 
   let navItems: { to: string; label: string; icon?: string; badge?: string }[] = [];
 
@@ -66,8 +67,8 @@ export const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-surface-white/95 backdrop-blur-xl shadow-nav border-b border-border-subtle">
       <div className="max-w-7xl mx-auto px-gutter h-16 flex items-center justify-between gap-4">
-        {/* Logo Brand */}
-        <Link to="/" className="flex items-center gap-space-sm group flex-shrink-0">
+        {/* Logo Brand (Navigasi ke Beranda sesuai Role Pengguna) */}
+        <Link to={homePath} className="flex items-center gap-space-sm group flex-shrink-0">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-card transition-transform group-hover:scale-105">
             <span className="material-symbols-outlined text-on-primary text-[22px]">inventory_2</span>
           </div>

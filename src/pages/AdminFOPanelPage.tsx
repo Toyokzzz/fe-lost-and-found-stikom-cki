@@ -338,21 +338,11 @@ export const AdminFOPanelPage: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Status Penyerahan & Aksi Verifikasi FO */}
+                            {/* Status Penyerahan (Tombol serah terima dipindahkan ke user pelapor barang temuan) */}
                             {claim.status !== 'handed_over' && item.status !== 'completed' ? (
-                              <div className="space-y-2 pt-1">
-                                <div className="p-2.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-950 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
-                                  <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
-                                  Status: Terklaim (Menunggu Penyerahan Fisik FO)
-                                </div>
-                                <button
-                                  onClick={() => handleVerifyHandover(claim.id, claim.claim_code)}
-                                  disabled={actionLoading === claim.id}
-                                  className="w-full py-2.5 px-4 rounded-xl bg-status-success hover:bg-green-700 text-white font-bold text-label-sm shadow-card transition-all flex items-center justify-center gap-2"
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">verified</span>
-                                  {actionLoading === claim.id ? 'Memproses Serah Terima...' : 'Konfirmasi Selesai / Serah Terima'}
-                                </button>
+                              <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
+                                <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
+                                Status: Terklaim (Menunggu Konfirmasi User Pelapor)
                               </div>
                             ) : (
                               <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">

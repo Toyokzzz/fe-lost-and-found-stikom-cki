@@ -102,7 +102,9 @@ export const ItemDetailPage: React.FC = () => {
   );
 
   const allClaims = reporterClaims.length > 0 ? reporterClaims : (foundItem?.claims || []);
-  const activeReporterClaim = isReporter && allClaims.length > 0 ? allClaims[0] : null;
+  const activeReporterClaim = isReporter
+    ? (allClaims.length > 0 ? allClaims[0] : (item as any)?.active_claim || null)
+    : null;
 
   // Kode unik hanya boleh muncul untuk: user pengklaim, admin FO, dan admin Dev
   const isClaimant = Boolean(
@@ -384,8 +386,18 @@ export const ItemDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Pertanyaan Validasi Penemu (Requirement #4 & #6) */}
-            {isFound && foundItem?.validation_question && (
+            {/* Pertanyaan Validasi Penemu: Jika sudah terjawab benar / diklaim, status verifikasi sudah selesai */}
+            {isFound && (foundItem?.status !== 'active' || myClaim || (item as any)?.active_claim) ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3.5 text-body-sm text-green-950 flex items-center gap-2.5 shadow-card">
+                <span className="material-symbols-outlined text-[22px] text-status-success flex-shrink-0">check_circle</span>
+                <div>
+                  <span className="font-bold block">Verifikasi Pertanyaan: Selesai</span>
+                  <span className="text-green-800 text-label-sm">
+                    Pertanyaan verifikasi ciri rahasia telah dijawab dengan benar dan diverifikasi oleh sistem.
+                  </span>
+                </div>
+              </div>
+            ) : isFound && foundItem?.validation_question ? (
               <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-body-sm space-y-1">
                 <span className="font-bold text-purple-900 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[18px] text-purple-700">quiz</span>
@@ -396,7 +408,7 @@ export const ItemDetailPage: React.FC = () => {
                   Calon pemilik sah harus menjawab pertanyaan ini dengan benar saat mengajukan klaim.
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* Reporter only: Hidden Detail indicator */}
             {'hidden_detail' in item && item.hidden_detail && (
@@ -581,21 +593,10 @@ export const ItemDetailPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {foundItem.status !== 'completed' && ((item as any)?.active_claim?.id || activeReporterClaim?.id) ? (
-                      <button
-                        onClick={() => handleHandoverByClaimId((item as any)?.active_claim?.id || activeReporterClaim?.id)}
-                        disabled={completing}
-                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">task_alt</span>
-                        {completing ? 'Memproses Serah Terima...' : 'Konfirmasi Selesai / Serah Terima FO'}
-                      </button>
-                    ) : (
-                      <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
-                        <span className="material-symbols-outlined text-[18px]">verified</span>
-                        Status: Barang Selesai / Terklaim Resmi
-                      </div>
-                    )}
+                    <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
+                      <span className="material-symbols-outlined text-[18px]">verified</span>
+                      Status: {foundItem.status === 'completed' ? 'Barang Selesai / Terklaim Resmi' : 'Terklaim (Menunggu Konfirmasi User Pelapor)'}
+                    </div>
                   </div>
                 ) : foundItem.status === 'active' ? (
                   <button
