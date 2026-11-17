@@ -187,7 +187,7 @@ export const CatalogPage: React.FC = () => {
             >
               <option value="">Semua Status</option>
               <option value="active">Aktif</option>
-              <option value="claimed">Dalam Proses</option>
+              <option value="claimed">Sedang Diproses</option>
               <option value="completed">Selesai</option>
             </select>
           </div>

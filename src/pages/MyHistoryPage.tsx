@@ -329,7 +329,7 @@ export const MyHistoryPage: React.FC = () => {
                               : 'bg-surface-container text-text-secondary'
                           }`}
                         >
-                          {item.status.toUpperCase()}
+                          {item.status === 'claimed' ? 'SEDANG DIPROSES' : item.status === 'active' ? 'AKTIF' : 'SELESAI'}
                         </span>
                       </div>
 
@@ -354,44 +354,23 @@ export const MyHistoryPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Display Claim Code to Reporter if Item is Claimed */}
+                      {/* Display Status Info to Reporter if Item is Claimed (Tanpa tombol & tanpa kode unik) */}
                       {itemClaim && (
                         <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">key</span>
-                              KODE KLAIM PEMILIK:
+                              <span className="material-symbols-outlined text-[14px]">info</span>
+                              STATUS KLAIM:
                             </span>
                             <span className="text-[11px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                              {itemClaim.status === 'handed_over' ? 'Selesai' : 'Siap Dicocokkan di FO'}
+                              {itemClaim.status === 'handed_over' || item.status === 'completed' ? 'Selesai' : 'Sedang Diproses'}
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between bg-surface-white px-3 py-1.5 rounded-lg border border-purple-200">
-                            <span className="font-mono font-black text-lg tracking-widest text-purple-950">
-                              {itemClaim.claim_code}
-                            </span>
-                            <button
-                              onClick={() => handleCopyCode(itemClaim.claim_code)}
-                              className="p-1 rounded text-purple-700 hover:text-purple-900 transition-colors"
-                              title="Salin Kode"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">
-                                {copiedCode === itemClaim.claim_code ? 'check' : 'content_copy'}
-                              </span>
-                            </button>
                           </div>
                           <p className="text-[11px] text-purple-800">
-                            Cocokkan kode ini dengan loket Front Office &amp; penerima barang.
+                            {itemClaim.status === 'handed_over' || item.status === 'completed'
+                              ? 'Barang ini telah selesai diserahterimakan dan dikonfirmasi diterima oleh pemilik sah.'
+                              : 'Barang temuan ini sedang dalam proses klaim kepemilikan. Serah terima dilakukan di loket FO.'}
                           </p>
-                          {itemClaim.status !== 'handed_over' && item.status !== 'completed' && (
-                            <button
-                              onClick={() => setSelectedClaimForHandover(itemClaim)}
-                              className="w-full mt-2 py-2 px-3 rounded-lg bg-status-success hover:opacity-90 text-white font-semibold text-label-sm shadow-card flex items-center justify-center gap-1.5 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                              Konfirmasi Barang Sudah Diklaim / Diserahkan
-                            </button>
-                          )}
                         </div>
                       )}
                     </div>

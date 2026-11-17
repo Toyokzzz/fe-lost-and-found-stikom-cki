@@ -77,7 +77,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           )}
           {item.status === 'claimed' && (
             <span className="px-2.5 py-1 rounded-full text-label-sm font-medium bg-purple-600 text-white shadow-card ring-2 ring-white/80">
-              Dalam Proses Klaim
+              Sedang Diproses
             </span>
           )}
           {item.status === 'completed' && (

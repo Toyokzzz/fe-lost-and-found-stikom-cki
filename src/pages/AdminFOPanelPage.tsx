@@ -338,11 +338,11 @@ export const AdminFOPanelPage: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Status Penyerahan (Tombol serah terima dipindahkan ke user pelapor barang temuan) */}
+                            {/* Status Penyerahan (Konfirmasi serah terima dilakukan oleh user pengklaim) */}
                             {claim.status !== 'handed_over' && item.status !== 'completed' ? (
                               <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">
                                 <span className="material-symbols-outlined text-[18px] text-purple-700">hourglass_top</span>
-                                Status: Terklaim (Menunggu Konfirmasi User Pelapor)
+                                Status: Sedang Diproses (Menunggu Konfirmasi Pengklaim)
                               </div>
                             ) : (
                               <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-green-900 font-semibold text-label-sm text-center flex items-center justify-center gap-1.5">

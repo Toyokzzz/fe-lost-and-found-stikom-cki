@@ -136,8 +136,7 @@ export const ItemDetailPage: React.FC = () => {
   const canSeeClaimCode = Boolean(isAdminDev || isAdminFO || isClaimant);
   const claimCodeToShow =
     (item as any)?.active_claim?.claim_code ||
-    myClaim?.claim_code ||
-    (isReporter ? activeReporterClaim?.claim_code : null);
+    myClaim?.claim_code;
 
   const isAlreadyHandedOver = Boolean(
     isHandedOverSuccess ||
@@ -254,7 +253,7 @@ export const ItemDetailPage: React.FC = () => {
               )}
               {item.status === 'claimed' && (
                 <span className="px-3 py-1 rounded-full text-label-sm font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                  Dalam Proses Klaim
+                  Sedang Diproses
                 </span>
               )}
               {item.status === 'completed' && (
@@ -509,50 +508,23 @@ export const ItemDetailPage: React.FC = () => {
                     )}
                   </div>
                 ) : activeReporterClaim ? (
-                  /* Tampilan Khusus Pelapor Barang Temuan Saat Barang Diklaim */
+                  /* Tampilan Khusus Pelapor Barang Temuan Saat Barang Diklaim (Hanya info status, tanpa tombol serah terima) */
                   <div className="bg-purple-950 text-white p-6 rounded-2xl border border-purple-400/40 shadow-floating space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[22px] text-amber-300">verified_user</span>
+                        <span className="material-symbols-outlined text-[22px] text-amber-300">info</span>
                         <span className="text-label-sm font-bold text-amber-300 uppercase tracking-wider">
-                          KODE UNIK SERAH TERIMA (PELAPOR &amp; FO)
+                          STATUS LAPORAN BARANG TEMUAN
                         </span>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-amber-300">
-                        {isAlreadyHandedOver ? 'Selesai Diserahkan' : 'Siap Dicocokkan di Loket FO'}
+                        {isAlreadyHandedOver ? 'Selesai' : 'Sedang Diproses'}
                       </span>
                     </div>
 
                     <p className="text-body-sm text-purple-200">
-                      Laporan barang temuan Anda telah diklaim dan verifikasinya cocok. Gunakan kode unik 6-karakter berikut untuk dicocokkan bersama petugas loket Front Office saat penerima/pemilik mengambil barang fisik.
+                      Laporan barang temuan Anda telah diajukan klaim oleh pemiliknya. Pencocokan kode unik dilakukan di loket Front Office ({foundItem.storage_location?.name || 'FO Kampus'}) dan konfirmasi penerimaan barang dilakukan oleh user pengeklaim.
                     </p>
-
-                    <div className="text-center py-3 bg-white/5 rounded-xl border border-white/10 space-y-1">
-                      <span className="text-[11px] font-bold text-purple-200 uppercase tracking-widest block">
-                        CLAIM CODE RESMI (6-KARAKTER)
-                      </span>
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-3xl font-mono font-black text-amber-300 tracking-widest">
-                          {activeReporterClaim.claim_code}
-                        </span>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(activeReporterClaim.claim_code);
-                            setCopiedReporterCode(true);
-                            setTimeout(() => setCopiedReporterCode(false), 2000);
-                          }}
-                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                          title="Salin Kode"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            {copiedReporterCode ? 'check' : 'content_copy'}
-                          </span>
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-purple-200 pt-1">
-                        Kode unik ini sama persis dengan yang tampil pada loket Front Office ({foundItem.storage_location?.name || 'FO Kampus'})
-                      </p>
-                    </div>
 
                     {/* Info Pengklaim jika tersedia */}
                     {activeReporterClaim.claimant && (
@@ -572,22 +544,12 @@ export const ItemDetailPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Tombol Konfirmasi Barang Sudah Diklaim (Dipindahkan dari Admin FO ke Pelapor) */}
-                    {!isAlreadyHandedOver ? (
-                      <button
-                        onClick={() => handleHandoverByClaimId(activeReporterClaim.id)}
-                        disabled={completing || isAlreadyHandedOver}
-                        className="w-full h-12 rounded-xl bg-status-success hover:opacity-90 disabled:opacity-50 text-white font-bold text-label-md transition-all shadow-card flex items-center justify-center gap-2 mt-2"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">task_alt</span>
-                        {completing ? 'Memproses Konfirmasi...' : 'Konfirmasi: Barang Sudah Diklaim / Diserahkan'}
-                      </button>
-                    ) : (
-                      <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
-                        <span className="material-symbols-outlined text-[18px]">verified</span>
-                        Status: Barang Sudah Selesai Diserahkan
-                      </div>
-                    )}
+                    <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
+                      <span className="material-symbols-outlined text-[18px]">
+                        {isAlreadyHandedOver ? 'verified' : 'hourglass_top'}
+                      </span>
+                      Status: {isAlreadyHandedOver ? 'Barang Sudah Selesai Diserahkan' : 'Sedang Diproses (Menunggu Konfirmasi Pengklaim)'}
+                    </div>
                   </div>
                 ) : (isAdminFO || isAdminDev) && claimCodeToShow ? (
                   /* Tampilan Khusus Petugas Admin FO & Admin Developer */
@@ -602,7 +564,7 @@ export const ItemDetailPage: React.FC = () => {
                       <span className="px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-white/10 text-amber-300">
                         {foundItem.status === 'completed'
                           ? 'Selesai / Terklaim'
-                          : 'Terklaim (Loket FO)'}
+                          : 'Sedang Diproses'}
                       </span>
                     </div>
 
@@ -637,7 +599,7 @@ export const ItemDetailPage: React.FC = () => {
 
                     <div className="p-3 bg-white/10 rounded-xl text-center text-label-sm font-semibold text-amber-300 flex items-center justify-center gap-1.5 mt-2">
                       <span className="material-symbols-outlined text-[18px]">verified</span>
-                      Status: {foundItem.status === 'completed' ? 'Barang Selesai / Terklaim Resmi' : 'Terklaim (Menunggu Konfirmasi User Pelapor)'}
+                      Status: {foundItem.status === 'completed' ? 'Barang Selesai / Terklaim Resmi' : 'Sedang Diproses (Menunggu Konfirmasi Pengklaim)'}
                     </div>
                   </div>
                 ) : foundItem.status === 'active' ? (
