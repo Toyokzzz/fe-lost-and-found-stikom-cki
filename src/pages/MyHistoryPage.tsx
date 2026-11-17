@@ -21,24 +21,30 @@ export const MyHistoryPage: React.FC = () => {
   const [selectedClaimForHandover, setSelectedClaimForHandover] = useState<Claim | null>(null);
   const [isConfirmingHandover, setIsConfirmingHandover] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchHistory = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
-      const [claimsRes, reportsRes] = await Promise.all([
+      const [claimsResult, reportsResult] = await Promise.allSettled([
         api.get('/claims/my'),
         api.get('/items/user/my-reports'),
       ]);
 
-      if (claimsRes.data.success) {
-        setClaims(claimsRes.data.data);
+      if (claimsResult.status === 'fulfilled' && claimsResult.value.data.success) {
+        setClaims(claimsResult.value.data.data || []);
       }
-      if (reportsRes.data.success) {
-        setFoundItems(reportsRes.data.data.foundItems);
-        setLostReports(reportsRes.data.data.lostReports);
+      if (reportsResult.status === 'fulfilled' && reportsResult.value.data.success) {
+        setFoundItems(reportsResult.value.data.data.foundItems || []);
+        setLostReports(reportsResult.value.data.data.lostReports || []);
+      }
+      if (claimsResult.status === 'rejected' && reportsResult.status === 'rejected') {
+        setFetchError('Gagal memuat data riwayat dari server. Silakan periksa koneksi atau coba muat ulang.');
       }
     } catch (err) {
       console.error('Gagal memuat riwayat:', err);
+      setFetchError('Terjadi kendala saat memuat riwayat.');
     } finally {
       setLoading(false);
     }
@@ -116,15 +122,24 @@ export const MyHistoryPage: React.FC = () => {
       <div className="bg-surface-white rounded-2xl p-6 sm:p-8 border border-border-subtle shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-bold text-headline-lg shadow-card">
-            {user?.name.charAt(0).toUpperCase()}
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
           </div>
           <div>
-            <h1 className="text-headline-md font-bold text-text-primary">{user?.name}</h1>
-            <p className="text-body-sm text-text-secondary">{user?.email} · Civitas Akademika ({user?.role})</p>
+            <h1 className="text-headline-md font-bold text-text-primary">{user?.name || 'Pengguna'}</h1>
+            <p className="text-body-sm text-text-secondary">
+              {user?.email} · Civitas Akademika ({user?.user_type || user?.role || 'User'})
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={fetchHistory}
+            className="p-2.5 rounded-md border border-border-subtle hover:bg-surface-container-low text-text-secondary transition-colors"
+            title="Muat Ulang Riwayat"
+          >
+            <span className="material-symbols-outlined text-[20px]">refresh</span>
+          </button>
           <Link
             to="/report-found"
             className="px-4 py-2 rounded-md text-label-md font-semibold bg-status-success text-white hover:opacity-90 transition-all shadow-card inline-flex items-center gap-1.5"
@@ -141,6 +156,21 @@ export const MyHistoryPage: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="bg-error-container border border-error/20 text-on-error-container rounded-xl p-4 text-body-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-status-error text-[20px]">error</span>
+            <span>{fetchError}</span>
+          </div>
+          <button
+            onClick={fetchHistory}
+            className="px-3 py-1 rounded bg-white text-status-error font-semibold text-label-sm border border-border-subtle hover:bg-surface-container-low"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
 
       {/* Tabs Control */}
       <div className="flex items-center bg-surface-container-low p-1 rounded-xl max-w-lg">

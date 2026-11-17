@@ -17,7 +17,16 @@ interface AuthContextType {
     name?: string,
     role?: string
   ) => Promise<User>;
-  updateProfile: (data: { name: string; nim: string; prodi: string; semester: number; kelas: string; phone?: string }) => Promise<void>;
+  updateProfile: (data: {
+    name: string;
+    user_type?: string;
+    jabatan?: string;
+    nim?: string;
+    prodi?: string;
+    semester?: number;
+    kelas?: string;
+    phone?: string;
+  }) => Promise<void>;
   logout: () => void;
   refreshMe: () => Promise<void>;
 }
@@ -105,10 +114,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProfile = async (data: {
     name: string;
-    nim: string;
-    prodi: string;
-    semester: number;
-    kelas: string;
+    user_type?: string;
+    jabatan?: string;
+    nim?: string;
+    prodi?: string;
+    semester?: number;
+    kelas?: string;
     phone?: string;
   }): Promise<void> => {
     const res = await api.put('/auth/profile', data);
@@ -138,16 +149,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAdminFO = userRole === 'admin_fo' || userRole === 'admin_developer' || userRole === 'admin';
   const isAdminDev = userRole === 'admin_developer' || userRole === 'admin';
 
-  const isProfileComplete = Boolean(
-    user &&
-    user.name?.trim() &&
-    user.nim?.trim() &&
-    user.prodi?.trim() &&
-    user.semester &&
-    user.semester >= 1 &&
-    user.semester <= 8 &&
-    user.kelas?.trim()
-  );
+  const isProfileComplete = Boolean((() => {
+    if (!user) return false;
+    const name = user.name?.trim() || '';
+    if (userRole === 'admin_fo') return name.length > 0;
+    if (userRole === 'admin_developer' || userRole === 'admin') return name.length > 0 && Boolean(user.phone?.trim());
+    const userType = user.user_type || 'Mahasiswa';
+    if (userType === 'Dosen' || userType === 'Pegawai') {
+      return name.length > 0 && Boolean(user.jabatan?.trim()) && Boolean(user.phone?.trim());
+    }
+    return Boolean(
+      name.length > 0 &&
+      user.nim?.trim() &&
+      user.prodi?.trim() &&
+      user.semester &&
+      user.semester >= 1 &&
+      user.semester <= 8 &&
+      user.kelas?.trim()
+    );
+  })());
 
   return (
     <AuthContext.Provider

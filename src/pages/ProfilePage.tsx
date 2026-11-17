@@ -7,8 +7,15 @@ export const ProfilePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const userRole = (user?.role || '').toLowerCase();
+  const isAdminFO = userRole === 'admin_fo';
+  const isAdminDev = userRole === 'admin_developer' || userRole === 'admin';
+  const isNormalUser = !isAdminFO && !isAdminDev;
+
   // Form states - Nama Lengkap otomatis kapital
   const [name, setName] = useState(user?.name ? user.name.toUpperCase() : '');
+  const [userType, setUserType] = useState<string>(user?.user_type || 'Mahasiswa');
+  const [jabatan, setJabatan] = useState<string>(user?.jabatan || '');
   const [nim, setNim] = useState(user?.nim || '');
   const [prodi, setProdi] = useState(user?.prodi || 'Teknik Informatika');
   const [semester, setSemester] = useState<number>(user?.semester || 1);
@@ -25,6 +32,8 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (user) {
       if (user.name) setName(user.name.toUpperCase());
+      if (user.user_type) setUserType(user.user_type);
+      if (user.jabatan) setJabatan(user.jabatan);
       if (user.nim) setNim(user.nim);
       if (user.prodi) setProdi(user.prodi);
       if (user.semester) setSemester(user.semester);
@@ -43,39 +52,74 @@ export const ProfilePage: React.FC = () => {
       return;
     }
 
-    if (!nim.trim()) {
-      setErrorMessage('NIM wajib diisi.');
+    if (isAdminDev && !phone.trim()) {
+      setErrorMessage('Nomor WhatsApp wajib diisi untuk Administrator.');
       return;
     }
 
-    if (!prodi.trim()) {
-      setErrorMessage('Program Studi wajib dipilih.');
-      return;
-    }
-
-    if (!semester || semester < 1 || semester > 8) {
-      setErrorMessage('Semester harus dipilih antara 1 sampai 8.');
-      return;
-    }
-
-    if (!kelas || (kelas !== 'Pagi' && kelas !== 'Malam')) {
-      setErrorMessage('Pilihan kelas harus "Pagi" atau "Malam".');
-      return;
+    if (isNormalUser) {
+      if (userType === 'Dosen' || userType === 'Pegawai') {
+        if (!jabatan.trim()) {
+          setErrorMessage(`Jabatan / Posisi wajib diisi untuk ${userType}.`);
+          return;
+        }
+        if (!phone.trim()) {
+          setErrorMessage('Nomor WhatsApp wajib diisi.');
+          return;
+        }
+      } else {
+        // Mahasiswa
+        if (!nim.trim()) {
+          setErrorMessage('NIM wajib diisi.');
+          return;
+        }
+        if (!prodi.trim()) {
+          setErrorMessage('Program Studi wajib dipilih.');
+          return;
+        }
+        if (!semester || semester < 1 || semester > 8) {
+          setErrorMessage('Semester harus dipilih antara 1 sampai 8.');
+          return;
+        }
+        if (!kelas || (kelas !== 'Pagi' && kelas !== 'Malam')) {
+          setErrorMessage('Pilihan kelas harus "Pagi" atau "Malam".');
+          return;
+        }
+      }
     }
 
     setIsSubmitting(true);
     try {
-      await updateProfile({
+      const payload: {
+        name: string;
+        user_type?: string;
+        jabatan?: string;
+        nim?: string;
+        prodi?: string;
+        semester?: number;
+        kelas?: string;
+        phone?: string;
+      } = {
         name: name.trim().toUpperCase(),
-        nim: nim.trim(),
-        prodi: prodi.trim(),
-        semester,
-        kelas,
         phone: phone.trim() || undefined,
-      });
+      };
+
+      if (isNormalUser) {
+        payload.user_type = userType;
+        if (userType === 'Dosen' || userType === 'Pegawai') {
+          payload.jabatan = jabatan.trim();
+        } else {
+          payload.nim = nim.trim();
+          payload.prodi = prodi.trim();
+          payload.semester = semester;
+          payload.kelas = kelas;
+        }
+      }
+
+      await updateProfile(payload);
 
       setSuccessMessage('Data profil berhasil disimpan dan dinyatakan lengkap!');
-      
+
       // Jika sebelumnya dialihkan dari halaman lapor, tawarkan lanjut
       if ((location.state as any)?.from) {
         setTimeout(() => {
@@ -88,6 +132,9 @@ export const ProfilePage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  const isDosenOrPegawai = isNormalUser && (userType === 'Dosen' || userType === 'Pegawai');
+  const isMahasiswa = isNormalUser && userType === 'Mahasiswa';
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-16">
@@ -106,7 +153,11 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-subtle text-primary text-label-sm font-semibold">
               <span className="material-symbols-outlined text-[16px]">badge</span>
-              Modul Profil Civitas Kampus STIKOM CKI
+              {isAdminFO
+                ? 'Profil Admin Front Office'
+                : isAdminDev
+                ? 'Profil Administrator Developer'
+                : 'Modul Profil Civitas Kampus STIKOM CKI'}
             </span>
 
             {isProfileComplete ? (
@@ -126,7 +177,11 @@ export const ProfilePage: React.FC = () => {
             Profil Pengguna
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Data profil wajib diisi lengkap sebelum Anda dapat membuat laporan penemuan maupun kehilangan barang di sistem Lost and Found STIKOM CKI.
+            {isAdminFO
+              ? 'Lengkapi nama lengkap Anda sebagai identitas resmi petugas loket Front Office.'
+              : isAdminDev
+              ? 'Lengkapi nama dan nomor WhatsApp Anda sebagai Administrator Sistem.'
+              : 'Data profil wajib diisi lengkap sebelum Anda dapat membuat laporan penemuan maupun kehilangan barang di sistem Lost and Found STIKOM CKI.'}
           </p>
         </div>
 
@@ -169,7 +224,28 @@ export const ProfilePage: React.FC = () => {
             />
           </div>
 
-          {/* Nama Lengkap (Otomatis Kapital / Caps Lock) */}
+          {/* Civitas Type Dropdown - Hanya untuk Pengguna Umum (Bukan Admin) */}
+          {isNormalUser && (
+            <div>
+              <label className="block text-label-md font-medium text-text-primary mb-1.5">
+                Kategori Civitas Kampus <span className="text-status-error">*</span>
+              </label>
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="input-field font-medium"
+              >
+                <option value="Mahasiswa">Mahasiswa</option>
+                <option value="Dosen">Dosen</option>
+                <option value="Pegawai">Pegawai / Staf</option>
+              </select>
+              <p className="text-label-sm text-text-secondary mt-1">
+                Pilih status Anda di lingkungan STIKOM CKI (Mahasiswa, Dosen, atau Pegawai).
+              </p>
+            </div>
+          )}
+
+          {/* Nama Lengkap (Otomatis Kapital / Caps Lock) - Wajib untuk semua */}
           <div>
             <label className="block text-label-md font-medium text-text-primary mb-1.5 flex justify-between">
               <span>
@@ -189,90 +265,119 @@ export const ProfilePage: React.FC = () => {
             />
           </div>
 
-          {/* NIM & Program Studi */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Form Fields Khusus Dosen / Pegawai: Jabatan & Nomor WhatsApp */}
+          {isDosenOrPegawai && (
             <div>
               <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                NIM (Nomor Induk Mahasiswa) <span className="text-status-error">*</span>
+                Jabatan / Posisi <span className="text-status-error">*</span>
               </label>
               <input
                 type="text"
-                value={nim}
-                onChange={(e) => setNim(e.target.value.trim())}
-                placeholder="Contoh: 2024010101"
+                value={jabatan}
+                onChange={(e) => setJabatan(e.target.value)}
+                placeholder="Contoh: Dosen Pengampu / Staf Administrasi / Kepala Lab"
                 required
-                className="input-field font-mono"
+                className="input-field"
               />
             </div>
+          )}
 
+          {/* Form Fields Khusus Mahasiswa: NIM, Prodi, Semester, Kelas */}
+          {isMahasiswa && (
+            <>
+              {/* NIM & Program Studi */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-label-md font-medium text-text-primary mb-1.5">
+                    NIM (Nomor Induk Mahasiswa) <span className="text-status-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={nim}
+                    onChange={(e) => setNim(e.target.value.trim())}
+                    placeholder="Contoh: 2024010101"
+                    required
+                    className="input-field font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-label-md font-medium text-text-primary mb-1.5">
+                    Program Studi <span className="text-status-error">*</span>
+                  </label>
+                  <select
+                    value={prodi}
+                    onChange={(e) => setProdi(e.target.value)}
+                    required
+                    className="input-field"
+                  >
+                    <option value="Teknik Informatika">Teknik Informatika</option>
+                    <option value="Sistem Informasi">Sistem Informasi</option>
+                    <option value="Bisnis Digital">Bisnis Digital</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Semester (Dropdown 1-8) & Kelas (Dropdown Pagi/Malam) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-label-md font-medium text-text-primary mb-1.5">
+                    Semester (Pilihan 1 - 8) <span className="text-status-error">*</span>
+                  </label>
+                  <select
+                    value={semester}
+                    onChange={(e) => setSemester(parseInt(e.target.value, 10))}
+                    required
+                    className="input-field"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                      <option key={s} value={s}>
+                        Semester {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-label-md font-medium text-text-primary mb-1.5">
+                    Kelas (Pagi / Malam) <span className="text-status-error">*</span>
+                  </label>
+                  <select
+                    value={kelas}
+                    onChange={(e) => setKelas(e.target.value)}
+                    required
+                    className="input-field"
+                  >
+                    <option value="Pagi">Pagi</option>
+                    <option value="Malam">Malam</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Nomor WhatsApp - Ditampilkan untuk semua, tapi wajib untuk Dosen/Pegawai & Admin Developer */}
+          {!isAdminFO && (
             <div>
-              <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                Program Studi <span className="text-status-error">*</span>
+              <label className="block text-label-md font-medium text-text-primary mb-1.5 flex justify-between">
+                <span>
+                  Nomor WhatsApp / Telepon Aktif{' '}
+                  {(isDosenOrPegawai || isAdminDev) && <span className="text-status-error">*</span>}
+                </span>
+                <span className="text-label-sm text-text-secondary">
+                  {isDosenOrPegawai || isAdminDev ? '(Wajib Diisi)' : '(Untuk koordinasi laporan)'}
+                </span>
               </label>
-              <select
-                value={prodi}
-                onChange={(e) => setProdi(e.target.value)}
-                required
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Contoh: 0812-3456-7890"
+                required={isDosenOrPegawai || isAdminDev}
                 className="input-field"
-              >
-                <option value="Teknik Informatika">Teknik Informatika</option>
-                <option value="Sistem Informasi">Sistem Informasi</option>
-                <option value="Manajemen Informatika">Manajemen Informatika</option>
-                <option value="Komputerisasi Akuntansi">Komputerisasi Akuntansi</option>
-              </select>
+              />
             </div>
-          </div>
-
-          {/* Semester (Dropdown 1-8) & Kelas (Dropdown Pagi/Malam) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                Semester (Pilihan 1 - 8) <span className="text-status-error">*</span>
-              </label>
-              <select
-                value={semester}
-                onChange={(e) => setSemester(parseInt(e.target.value, 10))}
-                required
-                className="input-field"
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                  <option key={s} value={s}>
-                    Semester {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                Kelas (Pagi / Malam) <span className="text-status-error">*</span>
-              </label>
-              <select
-                value={kelas}
-                onChange={(e) => setKelas(e.target.value)}
-                required
-                className="input-field"
-              >
-                <option value="Pagi">Pagi</option>
-                <option value="Malam">Malam</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Nomor WhatsApp */}
-          <div>
-            <label className="block text-label-md font-medium text-text-primary mb-1.5 flex justify-between">
-              <span>Nomor WhatsApp / Telepon Aktif</span>
-              <span className="text-label-sm text-text-secondary">(Untuk koordinasi laporan)</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Contoh: 0812-3456-7890"
-              className="input-field"
-            />
-          </div>
+          )}
 
           {/* Submit Button */}
           <div className="pt-4 flex items-center gap-3">

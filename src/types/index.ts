@@ -3,6 +3,8 @@ export interface User {
   name: string;
   email: string;
   role: 'mahasiswa' | 'admin_fo' | 'admin_developer' | 'admin' | string;
+  user_type?: 'Mahasiswa' | 'Dosen' | 'Pegawai' | string;
+  jabatan?: string;
   phone?: string;
   nim?: string;
   prodi?: string;
@@ -37,6 +39,8 @@ export interface StorageLocation {
 export interface ReporterProfile {
   id: string;
   name: string;
+  user_type?: string;
+  jabatan?: string;
   nim?: string;
   prodi?: string;
   semester?: number;

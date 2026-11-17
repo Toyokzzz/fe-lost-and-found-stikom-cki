@@ -27,7 +27,6 @@ export const AdminDashboardPage: React.FC = () => {
   const [newLocName, setNewLocName] = useState('');
   const [newLocBuilding, setNewLocBuilding] = useState('');
   const [newLocHours, setNewLocHours] = useState('');
-  const [newLocContact, setNewLocContact] = useState('');
 
   useEffect(() => {
     if (!user || !isAdminDev) {
@@ -45,7 +44,7 @@ export const AdminDashboardPage: React.FC = () => {
         api.get('/admin/stats'),
         api.get('/admin/items'),
         api.get('/categories'),
-        api.get('/locations'),
+        api.get('/admin/locations'),
       ]);
 
       if (statsRes.data.success) setStats(statsRes.data.data);
@@ -102,13 +101,11 @@ export const AdminDashboardPage: React.FC = () => {
         name: newLocName,
         building: newLocBuilding,
         service_hours: newLocHours,
-        contact: newLocContact,
         is_active: true,
       });
       setNewLocName('');
       setNewLocBuilding('');
       setNewLocHours('');
-      setNewLocContact('');
       await fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal membuat lokasi FO.');
@@ -121,6 +118,16 @@ export const AdminDashboardPage: React.FC = () => {
       await fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal mengubah status aktif lokasi.');
+    }
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus lokasi loket FO ini?')) return;
+    try {
+      await api.delete(`/admin/locations/${id}`);
+      await fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menghapus lokasi FO.');
     }
   };
 
@@ -619,17 +626,6 @@ export const AdminDashboardPage: React.FC = () => {
                   className="input-field"
                 />
               </div>
-              <div>
-                <label className="block text-label-sm font-medium text-text-secondary mb-1">Kontak / No Telepon</label>
-                <input
-                  type="text"
-                  value={newLocContact}
-                  onChange={(e) => setNewLocContact(e.target.value)}
-                  placeholder="0812-xxxx-xxxx"
-                  required
-                  className="input-field"
-                />
-              </div>
               <button
                 type="submit"
                 className="w-full h-11 rounded-md bg-primary-container hover:bg-primary-hover text-on-primary font-semibold text-label-md transition-all shadow-card"
@@ -641,7 +637,7 @@ export const AdminDashboardPage: React.FC = () => {
 
           {/* List Lokasi FO */}
           <div className="md:col-span-2 bg-surface-white rounded-2xl border border-border-subtle shadow-card p-6 space-y-4">
-            <h3 className="font-bold text-headline-sm text-text-primary">Lokasi Loket Front Office Aktif</h3>
+            <h3 className="font-bold text-headline-sm text-text-primary">Lokasi Loket Front Office</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {locations.map((loc) => (
                 <div
@@ -652,19 +648,28 @@ export const AdminDashboardPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-text-primary">{loc.name}</span>
-                    <button
-                      onClick={() => handleToggleLocation(loc.id)}
-                      className={`px-2 py-0.5 rounded-full font-semibold text-label-sm ${
-                        loc.is_active ? 'bg-green-50 text-status-success' : 'bg-error-container text-on-error-container'
-                      }`}
-                    >
-                      {loc.is_active ? 'Aktif' : 'Nonaktif'}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleToggleLocation(loc.id)}
+                        className={`px-2 py-0.5 rounded-full font-semibold text-label-sm ${
+                          loc.is_active ? 'bg-green-50 text-status-success' : 'bg-error-container text-on-error-container'
+                        }`}
+                      >
+                        {loc.is_active ? 'Aktif' : 'Nonaktif'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLocation(loc.id)}
+                        className="p-1 rounded-md text-status-error hover:bg-error-container/40 inline-flex items-center"
+                        title="Hapus Lokasi"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
                   </div>
                   <p className="text-text-secondary">{loc.building}</p>
                   <div className="text-label-sm text-text-secondary space-y-0.5">
                     <div>Jam: {loc.service_hours}</div>
-                    <div>Kontak: {loc.contact}</div>
+                    {loc.contact && <div>Kontak: {loc.contact}</div>}
                   </div>
                 </div>
               ))}

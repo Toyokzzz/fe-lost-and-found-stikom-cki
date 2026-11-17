@@ -15,9 +15,7 @@ export const ReportLostPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [lastSeenLocation, setLastSeenLocation] = useState('Area Kampus STIKOM CKI');
-  const [contact, setContact] = useState(user?.phone || '');
   const [description, setDescription] = useState('');
-  const [hiddenDetail, setHiddenDetail] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
@@ -89,9 +87,7 @@ export const ReportLostPage: React.FC = () => {
       formData.append('title', title);
       formData.append('category_id', categoryId);
       formData.append('last_seen_location', lastSeenLocation);
-      formData.append('contact', contact);
       formData.append('description', description);
-      formData.append('hidden_detail', hiddenDetail);
       if (photo) {
         formData.append('photo', photo);
       }
@@ -219,40 +215,24 @@ export const ReportLostPage: React.FC = () => {
             />
           </div>
 
-          {/* Grid Kategori & Kontak */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                Kategori Barang <span className="text-status-error">*</span>
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                required
-                className="input-field"
-              >
-                <option value="">Pilih Kategori...</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                Kontak / No WhatsApp Pelapor <span className="text-status-error">*</span>
-              </label>
-              <input
-                type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder="0812-xxxx-xxxx"
-                required
-                className="input-field"
-              />
-            </div>
+          {/* Kategori Barang */}
+          <div>
+            <label className="block text-label-md font-medium text-text-primary mb-1.5">
+              Kategori Barang <span className="text-status-error">*</span>
+            </label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              required
+              className="input-field"
+            >
+              <option value="">Pilih Kategori...</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Lokasi Terakhir Terlihat */}
@@ -273,33 +253,15 @@ export const ReportLostPage: React.FC = () => {
           {/* Deskripsi Umum */}
           <div>
             <label className="block text-label-md font-medium text-text-primary mb-1.5">
-              Deskripsi Ciri Umum Barang <span className="text-status-error">*</span>
+              Deskripsi Ciri Barang <span className="text-status-error">*</span>
             </label>
             <textarea
-              rows={3}
+              rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value.toUpperCase())}
-              placeholder="Tuliskan ciri fisik umum barang (warna, merk, stiker yang terlihat)..."
+              placeholder="Tuliskan ciri fisik barang (warna, merk, stiker, atau detail lain yang membedakan)..."
               required
               className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase"
-            />
-          </div>
-
-          {/* Hidden Detail */}
-          <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 sm:p-5 space-y-2">
-            <label className="block text-label-md font-semibold text-amber-900">
-              Ciri Rahasia Barang (Hidden Detail) <span className="text-status-error">*</span>
-            </label>
-            <p className="text-body-sm text-amber-800 leading-relaxed">
-              <strong>PENTING:</strong> Bagian ini <strong>disembunyikan dari publik</strong>. Digunakan sebagai bukti sahih ketika Anda mencocokkan barang dengan temuan pihak kampus.
-            </p>
-            <textarea
-              rows={3}
-              value={hiddenDetail}
-              onChange={(e) => setHiddenDetail(e.target.value.toUpperCase())}
-              placeholder="Contoh: ADA GORESAN HURUF 'T' DI BAGIAN BELAKANG GANTUNGAN KUNCI..."
-              required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card uppercase"
             />
           </div>
 

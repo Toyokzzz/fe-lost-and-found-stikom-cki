@@ -1,7 +1,7 @@
 /**
  * Utility untuk memformat URL gambar barang temuan/hilang agar selalu valid di browser,
  * menangani path Windows (backslash), path relatif tanpa leading slash, nama file langsung,
- * path folder uploads, serta origin backend dinamis.
+ * path folder uploads, origin backend dinamis, serta mencegah URL localhost tersangkut di production.
  */
 export const formatImageUrl = (photoUrl?: string | null): string => {
   if (!photoUrl) return '';
@@ -14,7 +14,17 @@ export const formatImageUrl = (photoUrl?: string | null): string => {
   // Ganti backslash Windows (\) menjadi standard URL slash (/)
   let cleanUrl = photoUrl.replace(/\\/g, '/').trim();
 
-  // Jika sudah berupa URL absolut HTTP/HTTPS
+  // Ekstrak relative uploads path jika ada URL localhost/127.0.0.1 yang di-generate backend
+  const hasLocalhostPrefix =
+    cleanUrl.startsWith('http://localhost') ||
+    cleanUrl.startsWith('http://127.0.0.1') ||
+    cleanUrl.startsWith('https://localhost');
+
+  if (hasLocalhostPrefix && cleanUrl.includes('/uploads/')) {
+    cleanUrl = cleanUrl.substring(cleanUrl.indexOf('/uploads/'));
+  }
+
+  // Jika berupa URL eksternal valid (Cloudinary, S3, Supabase, dll yang bukan localhost)
   if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
     return cleanUrl;
   }
@@ -28,7 +38,7 @@ export const formatImageUrl = (photoUrl?: string | null): string => {
     cleanUrl = cleanUrl.startsWith('/') ? `/uploads${cleanUrl}` : `/uploads/${cleanUrl}`;
   }
 
-  // Jika VITE_API_URL diarahkan ke origin backend tertentu (misal: http://localhost:5000/api)
+  // Jika VITE_API_URL diarahkan ke origin backend tertentu (misal: https://api.domain.com/api)
   const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
   if (apiUrl.startsWith('http://') || apiUrl.startsWith('https://')) {
     try {
@@ -39,11 +49,11 @@ export const formatImageUrl = (photoUrl?: string | null): string => {
     }
   }
 
-  // Di development / localhost jika port frontend bukan 5000, arahkan ke backend port 5000
+  // Di development / localhost
   if (typeof window !== 'undefined') {
     const isLocalhost =
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalhost && window.location.port !== '5000') {
+    if (isLocalhost && window.location.port !== '3000' && window.location.port !== '5000') {
       return `http://localhost:5000${cleanUrl}`;
     }
   }
