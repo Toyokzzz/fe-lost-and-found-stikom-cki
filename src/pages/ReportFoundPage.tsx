@@ -98,6 +98,11 @@ export const ReportFoundPage: React.FC = () => {
       return;
     }
 
+    if (!hiddenDetail.trim() || hiddenDetail.trim().length > 20) {
+      setErrorMessage('Kunci jawaban validasi wajib diisi minimal 1 karakter dan maksimal 20 karakter!');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -310,19 +315,25 @@ export const ReportFoundPage: React.FC = () => {
 
           {/* Hidden Detail (Kunci Jawaban Pertanyaan Validasi) */}
           <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 sm:p-5 space-y-2">
-            <label className="block text-label-md font-semibold text-amber-900">
-              Kunci Jawaban Validasi (Disembunyikan dari Publik) <span className="text-status-error">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-label-md font-semibold text-amber-900">
+                Kunci Jawaban Validasi (Disembunyikan dari Publik) <span className="text-status-error">*</span>
+              </label>
+              <span className={`text-label-sm font-mono ${hiddenDetail.length >= 20 ? 'text-amber-900 font-bold' : 'text-amber-800'}`}>
+                {hiddenDetail.length}/20 karakter
+              </span>
+            </div>
             <p className="text-body-sm text-amber-800 leading-relaxed">
-              <strong>PENTING:</strong> Jawaban ini <strong>disembunyikan dari publik</strong> dan dicocokkan otomatis oleh sistem saat pemilik menjawab pertanyaan validasi di atas.
+              <strong>PENTING:</strong> Jawaban ini <strong>disembunyikan dari publik</strong> dan dicocokkan otomatis oleh sistem saat pemilik menjawab pertanyaan validasi di atas. Bisa diisi 1 huruf atau angka hingga batas maksimal 20 huruf dan angka.
             </p>
-            <textarea
-              rows={3}
+            <input
+              type="text"
+              maxLength={20}
               value={hiddenDetail}
-              onChange={(e) => setHiddenDetail(e.target.value.toUpperCase())}
-              placeholder="Contoh: GANTUNGAN BONEKA PIKACHU KUNING DAN ADA BEKAS GORESAN HURUF K DI BALIKNYA..."
+              onChange={(e) => setHiddenDetail(e.target.value.toUpperCase().slice(0, 20))}
+              placeholder="Contoh: A, 1, BIRU, B3, HONDA..."
               required
-              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card uppercase"
+              className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-amber-300 text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-card uppercase font-semibold"
             />
           </div>
 

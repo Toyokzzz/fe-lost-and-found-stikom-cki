@@ -13,6 +13,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
   const [successData, setSuccessData] = useState<{ claimCode: string; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -20,16 +21,19 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!answer.trim() || answer.trim().length > 20 || isLocked) return;
+
     setErrorMessage(null);
     setIsSubmitting(true);
 
     try {
       const res = await api.post('/claims/verify', {
         found_item_id: item.id,
-        answer,
+        answer: answer.trim(),
       });
 
       if (res.data.success) {
+        setIsLocked(false);
         setSuccessData({
           claimCode: res.data.data.claim.claim_code,
           message: res.data.message,
@@ -37,9 +41,12 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
         onSuccess();
       }
     } catch (err: any) {
-      setErrorMessage(
-        err.response?.data?.message || 'Verifikasi gagal. Pastikan deskripsi ciri rahasia Anda benar.'
-      );
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || 'Verifikasi gagal. Pastikan deskripsi ciri rahasia Anda benar.';
+      setErrorMessage(msg);
+      if (status === 429) {
+        setIsLocked(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -85,29 +92,41 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
                 "{item.validation_question || 'Sebutkan ciri khusus atau isi rahasia dari barang ini!'}"
               </p>
               <p className="text-label-sm text-purple-850">
-                Jawab pertanyaan verifikasi di atas dengan benar. Jika jawaban Anda sesuai, sistem otomatis menerbitkan Claim Code unik 6-karakter untuk pengambilan di Front Office.
+                Jawab pertanyaan verifikasi di atas dengan benar (1 sampai 20 karakter). Anda diberi <strong>3 kali kesempatan</strong>. Jika salah sebanyak 3 kali, sistem akan memberikan waktu jeda selama <strong>60 menit</strong>.
               </p>
             </div>
 
             {errorMessage && (
               <div className="bg-error-container border border-error/20 text-on-error-container rounded-xl p-3 text-body-sm flex items-start gap-2.5 mb-4">
-                <span className="material-symbols-outlined text-status-error text-[18px] flex-shrink-0 mt-0.5">error</span>
-                <span>{errorMessage}</span>
+                <span className="material-symbols-outlined text-status-error text-[18px] flex-shrink-0 mt-0.5">
+                  {isLocked ? 'timer' : 'error'}
+                </span>
+                <div>
+                  {isLocked && <span className="font-bold block">Waktu Jeda Aktif (3x Kesempatan Habis)</span>}
+                  <span>{errorMessage}</span>
+                </div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-label-md font-medium text-text-primary mb-1.5">
-                  Jawaban Anda <span className="text-status-error">*</span>
-                </label>
-                <textarea
-                  rows={4}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-label-md font-medium text-text-primary">
+                    Jawaban Anda <span className="text-status-error">*</span>
+                  </label>
+                  <span className={`text-label-sm font-mono ${answer.length >= 20 ? 'text-status-error font-bold' : 'text-text-secondary'}`}>
+                    {answer.length}/20 karakter
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  maxLength={20}
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value.toUpperCase())}
-                  placeholder="Ketik jawaban Anda secara spesifik sesuai barang milik Anda..."
+                  disabled={isLocked}
+                  onChange={(e) => setAnswer(e.target.value.toUpperCase().slice(0, 20))}
+                  placeholder="Ketik 1 s/d 20 karakter (huruf/angka)..."
                   required
-                  className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase"
+                  className="w-full px-3.5 py-2.5 rounded-md bg-surface-white border border-border-subtle text-on-surface text-body-md placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-container transition-all shadow-card uppercase font-semibold disabled:bg-surface-container disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -121,10 +140,10 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose, o
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || answer.trim().length < 3}
+                  disabled={isSubmitting || answer.trim().length < 1 || isLocked}
                   className="px-6 py-2.5 rounded-md text-label-md font-semibold text-on-primary bg-primary-container hover:bg-primary-hover disabled:opacity-50 shadow-card transition-all flex items-center gap-2"
                 >
-                  {isSubmitting ? 'Memverifikasi...' : 'Verifikasi & Terbitkan Kode'}
+                  {isSubmitting ? 'Memverifikasi...' : isLocked ? 'Terkunci (Jeda 60 Menit)' : 'Verifikasi & Terbitkan Kode'}
                 </button>
               </div>
             </form>

@@ -19,7 +19,6 @@ export const HomePage: React.FC = () => {
     return <Navigate to={target} replace />;
   }
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     totalFound: 0,
     totalLost: 0,
@@ -43,11 +42,6 @@ export const HomePage: React.FC = () => {
     };
     fetchData();
   }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(searchQuery.trim() ? `/catalog?search=${encodeURIComponent(searchQuery.trim())}` : '/catalog');
-  };
 
   const steps = [
     {
@@ -144,42 +138,21 @@ export const HomePage: React.FC = () => {
             Claim Code 6-karakter unik, dan penitipan terpusat di loket Front Office.
           </p>
 
-          {/* Search box */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="max-w-2xl mx-auto flex items-center bg-surface-white rounded-xl p-1.5 shadow-floating border border-white/20"
-          >
-            <span className="material-symbols-outlined text-text-secondary pl-3 text-[22px]">search</span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari barang (Dompet hitam, KTM, Jaket, Laptop)..."
-              className="flex-1 py-2.5 px-3 text-body-md text-on-surface focus:outline-none placeholder:text-text-secondary bg-transparent"
-            />
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-md bg-primary-container text-on-primary font-semibold text-label-md hover:bg-primary-hover transition-all flex-shrink-0 shadow-card"
-            >
-              Cari Sekarang
-            </button>
-          </form>
-
-          {/* Quick CTAs */}
+          {/* Action CTAs untuk Pengguna Umum (Belum Login) */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
-              to={user ? '/report-found' : '/auth?mode=register'}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-status-success text-white font-semibold text-label-md shadow-card hover:opacity-95 transition-all"
+              to="/auth"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-container hover:bg-primary-hover text-on-primary font-semibold text-label-md shadow-card transition-all"
             >
-              <span className="material-symbols-outlined text-[20px]">add_circle</span>
-              Saya Menemukan Barang
+              <span className="material-symbols-outlined text-[20px]">login</span>
+              Masuk ke Akun Kampus
             </Link>
             <Link
-              to={user ? '/report-lost' : '/auth?mode=register'}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-tertiary-fixed-dim text-on-accent-warm font-semibold text-label-md shadow-card hover:opacity-95 transition-all"
+              to="/catalog"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-label-md shadow-card transition-all"
             >
-              <span className="material-symbols-outlined text-[20px]">report</span>
-              Saya Kehilangan Barang
+              <span className="material-symbols-outlined text-[20px]">visibility</span>
+              Lihat Katalog Publik
             </Link>
           </div>
         </div>
